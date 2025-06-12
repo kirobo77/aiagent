@@ -111,7 +111,17 @@ AI Agent는 단순한 챗봇을 넘어서 자율적으로 작업을 수행할 �
 ### 2.1 AutoGen 이란?
 
 Microsoft에서 개발한 AutoGen은 AI 에이전트를 구축하고 여러 에이전트 간의 협업을 통해 복잡한 작업을 해결할 수 있는 오픈소스 프로그래밍 프레임워크
-사용자가 다양한 역할을 가진 에이전트들을 정의하고 이들 간의 상호작용을 설계함으로써 효율적인 AI 시스템을 구축할 수 있음
+사용자가 다양한 역할을 가진 에이전트들을 정의하고 이들 간의 상호작용을 설계함으로써 효율적인 AI 시스템을 구축할 수 있음.
+
+| 항목               | AG (AutoGen, Microsoft)                                      | AG2 (AutoGen 2, 커뮤니티/창립자 주도)                        |
+| :----------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
+| **유래/운영 주체** | Microsoft가 주도, 공식 AutoGen 프로젝트                      | AutoGen 창립자 및 초기 기여자들이 독립적으로 운영            |
+| **버전/아키텍처**  | 0.2.x 유지 + 0.4(완전 리라이트) 개발 중, 대대적 구조 변경 예정 | 0.3.x (0.2.34 기반, AG2로 리브랜딩), 기존 구조와 완전한 하위 호환성 |
+| **주요 목표**      | MS 생태계 통합, TypeScript 등 다양한 언어 지원, 분산형 에이전트, Studio 개선, RAG/메모리 고도화 등 혁신적 기능 | 커뮤니티 중심, 안정성, 생산성, 실험/투명성, 기존 사용자 코드 보호, 모듈성·확장성 강화 |
+| **패키지명**       | autogen, pyautogen (0.2.x/0.4.x)                             | ag2, autogen, pyautogen (동일, AG2가 메인)                   |
+| **코드 호환성**    | 0.4에서 호환성 깨질 수 있음(완전 리라이트)                   | 기존 코드 100% 호환, 안정적 유지                             |
+| **적합한 사용자**  | 최신 MS 생태계 활용, 혁신적 기능 원하는 사용자               | 안정성, 기존 코드 유지, 커뮤니티 중심 개발 선호자            |
+| **공식 홈페이지**  | [공식 문서](https://microsoft.github.io/autogen/stable/index.html)[1](https://microsoft.github.io/autogen/stable/index.html), [MS Research](https://www.microsoft.com/en-us/research/project/autogen/)[5](https://www.microsoft.com/en-us/research/project/autogen/), [GitHub](https://github.com/microsoft/autogen)[3](https://www.linkedin.com/posts/harishnairlinked_github-microsoftautogen-a-programming-activity-7291068721555558400-_cOK) | [공식 문서](https://docs.ag2.ai/)[2](https://www.linkedin.com/posts/chi-wang-autogen_github-ag2aiag2-ag2-formerly-autogen-activity-7262922853312802818-WHp7), [GitHub](https://github.com/yaronbeen/ag2-1)[4](https://github.com/yaronbeen/ag2-1) |
 
 
 
