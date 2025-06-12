@@ -835,7 +835,7 @@ class CodeGenerationPipeline:
             "api_type": "azure",
             "base_url": "https://edutech-eastus.openai.azure.com/",
             "api_version": "2023-12-01-preview",
-            "api_key": "a634b87afef5450e8b3a6e729a809c5f" # 실제 키 사용 시 주의
+            "api_key": "" # 실제 키 사용 시 주의
         }
     ]
     llm_config = {
@@ -1049,7 +1049,7 @@ class CodeReviewSystem:
             "api_type": "azure",
             "base_url": "https://edutech-eastus.openai.azure.com/",
             "api_version": "2023-12-01-preview",
-            "api_key": "a634b87afef5450e8b3a6e729a809c5f" # 실제 키 사용 시 주의
+            "api_key": "" # 실제 키 사용 시 주의
         }
     ]
     llm_config = {
@@ -1308,7 +1308,7 @@ config_list_azure = [
             "api_type": "azure",
             "base_url": "https://edutech-eastus.openai.azure.com/",
             "api_version": "2023-12-01-preview",
-            "api_key": "a634b87afef5450e8b3a6e729a809c5f" # 실제 키 사용 시 주의
+            "api_key": "" # 실제 키 사용 시 주의
         }
     ]
 llm_config = {
