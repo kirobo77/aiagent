@@ -2322,16 +2322,9 @@ which python
 pip install pyautogen==0.9.0
 
 # 핵심 라이브러리 설치
-pip install fastapi==0.104.1
-pip install uvicorn[standard]==0.24.0
-pip install python-dotenv==1.0.0
-pip install pydantic==2.5.0
-pip install openai==1.3.0
-
-# 추가 유틸리티 라이브러리
-pip install httpx==0.25.2
-pip install aiofiles==23.2.1
-pip install python-multipart==0.0.6
+pip install fastapi
+pip install uvicorn[standard]
+pip install ag2[openai]
 
 # 요구사항 파일 생성
 pip freeze > requirements.txt
