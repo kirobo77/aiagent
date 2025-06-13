@@ -376,15 +376,18 @@ graph TB
 ###### 코드 실행 전문 UserProxyAgent
 
 ```python
+# basic_example.py
+import os
+from autogen import AssistantAgent, UserProxyAgent
 # 코드 실행에 특화된 UserProxyAgent
-code_executor = UserProxyAgent(
+user_proxy = UserProxyAgent(
     name="code_executor",
     system_message="""코드 실행 전문 에이전트입니다.
     안전하고 효율적인 코드 실행을 담당합니다.""",
     human_input_mode="NEVER",  # 사용자 입력 없이 자동 실행
     max_consecutive_auto_reply=15,
     code_execution_config={
-        "work_dir": work_dir,
+        "work_dir": "./",
         "use_docker": False,
         "timeout": 120,  # 더 긴 타임아웃
         "last_n_messages": 5,  # 더 많은 메시지 저장
@@ -397,7 +400,7 @@ code_executor = UserProxyAgent(
 messages = [{"role": "user", "content": "```bash\nls -al\n```"}]
 
 #실행 및 결과 확인
-response = user_proxy.generate_reply(message)
+response = user_proxy.generate_reply(messages)
 print(response)
 
 
