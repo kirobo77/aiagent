@@ -208,7 +208,85 @@ graph TB
 
 ## 3. Agent별 상세 기능
 
-### 3.1 AssistantAgent
+### 3.1 UserProxyAgent
+
+#### UserProxyAgent 개요
+
+UserProxyAgent는 사용자를 대신하여 코드를 실행하고, 다른 에이전트와의 상호작용을 관리하는 역할.
+
+#### 주요 기능
+
+- 코드 실행 환경 제공
+- 사용자 입력 처리
+- 파일 시스템 접근
+- 외부 도구 실행
+
+```mermaid
+graph TB
+    A[UserProxyAgent] --> B[코드 실행]
+    A --> C[사용자 입력 처리]
+    A --> D[다른 Agent와 통신]
+    B --> E[실행 결과 반환]
+    C --> F[입력 검증]
+    D --> G[메시지 라우팅]
+```
+
+#### UserProxyAgent 상세 설정
+
+##### 기본 파라미터 설명
+
+| 파라미터 | 타입 | 설명 | 기본값 |
+|---------|------|------|--------|
+| `name` | str | 에이전트 이름 | "userproxy" |
+| `human_input_mode` | str | 사용자 입력 모드 | "ALWAYS" |
+| `code_execution_config` | dict | 코드 실행 설정 | None |
+| `max_consecutive_auto_reply` | int | 최대 연속 자동 응답 수 | None |
+| `is_termination_msg` | function | 종료 메시지 판단 함수 | None |
+
+##### 코드 실행 설정 파라미터
+
+| 파라미터 | 타입 | 설명 |
+|---------|------|------|
+| `work_dir` | str | 작업 디렉토리 경로 |
+| `use_docker` | bool | Docker 사용 여부 |
+| `timeout` | int | 실행 타임아웃 (초) |
+| `last_n_messages` | int | 저장할 최근 메시지 수 |
+
+##### UserProxyAgent 활용 실습
+###### 코드 실행 전문 UserProxyAgent
+
+```python
+# basic_example.py
+import os
+from autogen import AssistantAgent, UserProxyAgent
+# 코드 실행에 특화된 UserProxyAgent
+user_proxy = UserProxyAgent(
+    name="code_executor",
+    system_message="""코드 실행 전문 에이전트입니다.
+    안전하고 효율적인 코드 실행을 담당합니다.""",
+    human_input_mode="NEVER",  # 사용자 입력 없이 자동 실행
+    max_consecutive_auto_reply=15,
+    code_execution_config={
+        "work_dir": "./",
+        "use_docker": False,
+        "timeout": 120,  # 더 긴 타임아웃
+        "last_n_messages": 5,  # 더 많은 메시지 저장
+    },
+    # 커스텀 종료 조건
+    is_termination_msg=lambda msg: "작업 완료" in msg.get("content", "") or 
+                                   "TERMINATE" in msg.get("content", "")
+)
+
+messages = [{"role": "user", "content": "```bash\nls -al\n```"}]
+
+#실행 및 결과 확인
+response = user_proxy.generate_reply(messages)
+print(response)
+
+
+```
+
+### 3.2 AssistantAgent
 
 #### AssistantAgent 개요
 
@@ -328,83 +406,7 @@ advanced_assistant = AssistantAgent(
 
 
 
-### 3.2 UserProxyAgent
 
-#### UserProxyAgent 개요
-
-UserProxyAgent는 사용자를 대신하여 코드를 실행하고, 다른 에이전트와의 상호작용을 관리하는 역할.
-
-#### 주요 기능
-
-- 코드 실행 환경 제공
-- 사용자 입력 처리
-- 파일 시스템 접근
-- 외부 도구 실행
-
-```mermaid
-graph TB
-    A[UserProxyAgent] --> B[코드 실행]
-    A --> C[사용자 입력 처리]
-    A --> D[다른 Agent와 통신]
-    B --> E[실행 결과 반환]
-    C --> F[입력 검증]
-    D --> G[메시지 라우팅]
-```
-
-#### UserProxyAgent 상세 설정
-
-##### 기본 파라미터 설명
-
-| 파라미터 | 타입 | 설명 | 기본값 |
-|---------|------|------|--------|
-| `name` | str | 에이전트 이름 | "userproxy" |
-| `human_input_mode` | str | 사용자 입력 모드 | "ALWAYS" |
-| `code_execution_config` | dict | 코드 실행 설정 | None |
-| `max_consecutive_auto_reply` | int | 최대 연속 자동 응답 수 | None |
-| `is_termination_msg` | function | 종료 메시지 판단 함수 | None |
-
-##### 코드 실행 설정 파라미터
-
-| 파라미터 | 타입 | 설명 |
-|---------|------|------|
-| `work_dir` | str | 작업 디렉토리 경로 |
-| `use_docker` | bool | Docker 사용 여부 |
-| `timeout` | int | 실행 타임아웃 (초) |
-| `last_n_messages` | int | 저장할 최근 메시지 수 |
-
-##### UserProxyAgent 활용 실습
-###### 코드 실행 전문 UserProxyAgent
-
-```python
-# basic_example.py
-import os
-from autogen import AssistantAgent, UserProxyAgent
-# 코드 실행에 특화된 UserProxyAgent
-user_proxy = UserProxyAgent(
-    name="code_executor",
-    system_message="""코드 실행 전문 에이전트입니다.
-    안전하고 효율적인 코드 실행을 담당합니다.""",
-    human_input_mode="NEVER",  # 사용자 입력 없이 자동 실행
-    max_consecutive_auto_reply=15,
-    code_execution_config={
-        "work_dir": "./",
-        "use_docker": False,
-        "timeout": 120,  # 더 긴 타임아웃
-        "last_n_messages": 5,  # 더 많은 메시지 저장
-    },
-    # 커스텀 종료 조건
-    is_termination_msg=lambda msg: "작업 완료" in msg.get("content", "") or 
-                                   "TERMINATE" in msg.get("content", "")
-)
-
-messages = [{"role": "user", "content": "```bash\nls -al\n```"}]
-
-#실행 및 결과 확인
-response = user_proxy.generate_reply(messages)
-print(response)
-
-
-```
 
 ###### AssistantAgent와 UserProxyAgent 연동 실습
 
