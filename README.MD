@@ -411,30 +411,40 @@ advanced_assistant = AssistantAgent(
 ###### AssistantAgent와 UserProxyAgent 연동 실습
 
 ```python
-# 두 에이전트를 연동한 간단한 대화 시스템
-def run_assistant_user_chat():
-    """AssistantAgent와 UserProxyAgent 간의 대화 실행"""
-    
-    # 이전에 생성한 assistant와 user_proxy 사용
-    try:
-        # 대화 시작
-        user_proxy.initiate_chat(
-            assistant,
-            message="""Python으로 간단한 계산기 클래스를 만들어주세요.
-            다음 기능이 포함되어야 합니다:
-            1. 사칙연산 (덧셈, 뺄셈, 곱셈, 나눗셈)
-            2. 계산 이력 저장
-            3. 이력 조회 기능
-            
-            코드를 작성한 후 간단한 테스트도 실행해주세요."""
-        )
-        
-    except Exception as e:
-        print(f"대화 실행 중 오류 발생: {e}")
+# basic_example.py
+import os
+from autogen import AssistantAgent, UserProxyAgent
+# 코드 실행에 특화된 UserProxyAgent
+user_proxy = UserProxyAgent(
+    name="code_executor",
+    system_message="""코드 실행 전문 에이전트입니다.
+    안전하고 효율적인 코드 실행을 담당합니다.""",
+    human_input_mode="ALWAYS",  # 사용자 입력 없이 자동 실행
+    max_consecutive_auto_reply=15,
+    code_execution_config={
+        "work_dir": "./",
+        "use_docker": False,
+        "timeout": 120,  # 더 긴 타임아웃
+        "last_n_messages": 5,  # 더 많은 메시지 저장
+    },
+    # 커스텀 종료 조건
+    is_termination_msg=lambda msg: "작업 완료" in msg.get("content", "") or 
+                                   "TERMINATE" in msg.get("content", "")
+)
 
-# 실행
-if __name__ == "__main__":
-    run_assistant_user_chat()
+#실행 및 결과 확인
+response = user_proxy.initiate_chat(
+    user_proxy,
+    message="""Python으로 간단한 계산기 클래스를 만들어주세요.
+    다음 기능이 포함되어야 합니다:
+    1. 사칙연산 (덧셈, 뺄셈, 곱셈, 나눗셈)
+    2. 계산 이력 저장
+    3. 이력 조회 기능
+    
+    코드를 작성한 후 간단한 테스트도 실행해주세요."""
+)
+
+print(response)
 ```
 
 
