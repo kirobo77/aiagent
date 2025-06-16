@@ -2255,7 +2255,688 @@ if __name__ == "__main__":
 
 
 
-## 6. 실습 환경 구성
+## 6. MCP 개요
+MCP(Model Context Protocol)는 AI 모델과 외부 시스템 간의 표준화된 통신 프로토콜입니다. 이는 AI 에이전트가 다양한 데이터 소스, 도구, 서비스와 안전하고 효율적으로 상호작용할 수 있게 해주는 표준 인터페이스를 제공합니다.
+
+### 6.1 핵심 목표
+
+| 목표 | 설명 | 이점 |
+|------|------|------|
+| **표준화** | 일관된 통신 프로토콜 제공 | 개발 복잡성 감소, 상호 운용성 향상 |
+| **보안성** | 안전한 컨텍스트 공유 메커니즘 | 데이터 보호, 접근 제어 강화 |
+| **확장성** | 다양한 시스템과의 연동 지원 | 생태계 확장, 플러그인 아키텍처 |
+| **성능** | 효율적인 데이터 전송 및 처리 | 응답 시간 최적화, 리소스 절약 |
+
+### 6.2 MCP vs 기존 방식 비교
+
+```mermaid
+graph TB
+    subgraph "기존 방식"
+        A1[AI Model] --> B1[Custom API 1]
+        A1 --> B2[Custom API 2]
+        A1 --> B3[Custom API 3]
+        A1 --> B4[Custom API 4]
+    end
+    
+    subgraph "MCP 방식"
+        A2[AI Model] --> MCP[MCP Interface]
+        MCP --> C1[Service 1]
+        MCP --> C2[Service 2]
+        MCP --> C3[Service 3]
+        MCP --> C4[Service 4]
+    end
+```
+
+## 6.3 MCP 아키텍처
+
+### 전체 아키텍처
+
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        Client[MCP Client]
+        Agent[AI Agent]
+        App[Application]
+    end
+    
+    subgraph "Protocol Layer"
+        MCP_Core[MCP Core Protocol]
+        Transport[Transport Layer]
+        Security[Security Layer]
+    end
+    
+    subgraph "Server Layer"
+        MCP_Server[MCP Server]
+        Tools[Tools]
+        Resources[Resources]
+        Context[Context Store]
+    end
+    
+    subgraph "External Systems"
+        DB[(Database)]
+        API[External APIs]
+        FS[File System]
+        Cloud[Cloud Services]
+    end
+    
+    Client --> MCP_Core
+    Agent --> MCP_Core
+    App --> MCP_Core
+    
+    MCP_Core --> Transport
+    Transport --> Security
+    Security --> MCP_Server
+    
+    MCP_Server --> Tools
+    MCP_Server --> Resources
+    MCP_Server --> Context
+    
+    Tools --> DB
+    Tools --> API
+    Resources --> FS
+    Context --> Cloud
+```
+
+### 계층별 역할
+
+| 계층 | 역할 | 주요 기능 |
+|------|------|----------|
+| **Client Layer** | 사용자 인터페이스 및 AI 에이전트 | 요청 생성, 응답 처리, 사용자 상호작용 |
+| **Protocol Layer** | 통신 프로토콜 및 보안 | 메시지 라우팅, 인증, 암호화, 프로토콜 변환 |
+| **Server Layer** | 서비스 제공 및 리소스 관리 | 도구 실행, 리소스 제공, 컨텍스트 관리 |
+| **External Systems** | 실제 데이터 및 서비스 | 데이터 저장소, 외부 API, 클라우드 서비스 |
+
+## 6.4 MCP 구성 요소
+
+### 클라이언트 (Client)
+
+```mermaid
+graph LR
+    subgraph "MCP Client"
+        CM[Connection Manager]
+        RM[Request Manager]
+        EM[Event Manager]
+        SM[Session Manager]
+    end
+    
+    CM --> Server[MCP Server]
+    RM --> CM
+    EM --> CM
+    SM --> CM
+```
+
+#### 클라이언트 기능 매트릭스
+
+| 구성 요소 | 기능 | 책임 |
+|-----------|------|------|
+| **Connection Manager** | 연결 관리 | 서버 연결, 재연결, 연결 상태 모니터링 |
+| **Request Manager** | 요청 처리 | 요청 생성, 응답 대기, 타임아웃 관리 |
+| **Event Manager** | 이벤트 처리 | 서버 이벤트 수신, 콜백 처리 |
+| **Session Manager** | 세션 관리 | 세션 생성, 유지, 종료 |
+
+### 서버 (Server)
+
+```mermaid
+graph TB
+    subgraph "MCP Server"
+        TM[Tool Manager]
+        RM[Resource Manager]
+        CM[Context Manager]
+        SM[Security Manager]
+        
+        subgraph "Tools"
+            T1[Code Execution]
+            T2[Data Query]
+            T3[File Operations]
+            T4[API Calls]
+        end
+        
+        subgraph "Resources"
+            R1[Configuration]
+            R2[Documentation]
+            R3[Schemas]
+            R4[Templates]
+        end
+    end
+    
+    TM --> T1
+    TM --> T2
+    TM --> T3
+    TM --> T4
+    
+    RM --> R1
+    RM --> R2
+    RM --> R3
+    RM --> R4
+```
+
+#### 서버 구성 요소 상세
+
+| 매니저 | 관리 대상 | 주요 기능 |
+|---------|-----------|----------|
+| **Tool Manager** | 실행 가능한 도구들 | 도구 등록, 실행, 결과 반환 |
+| **Resource Manager** | 정적 리소스들 | 리소스 제공, 캐싱, 버전 관리 |
+| **Context Manager** | 컨텍스트 정보 | 상태 관리, 히스토리 추적 |
+| **Security Manager** | 보안 정책 | 인증, 권한 검사, 감사 로그 |
+
+### 프로토콜 메시지
+
+#### 메시지 타입 분류
+
+```mermaid
+graph TD
+    Messages[MCP Messages] --> Request[Request Messages]
+    Messages --> Response[Response Messages]
+    Messages --> Notification[Notification Messages]
+    
+    Request --> R1[tool/call]
+    Request --> R2[resource/read]
+    Request --> R3[context/get]
+    
+    Response --> S1[Success Response]
+    Response --> S2[Error Response]
+    
+    Notification --> N1[tool/result]
+    Notification --> N2[context/update]
+    Notification --> N3[server/status]
+```
+
+#### 메시지 구조
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `id` | string | ✓ | 메시지 고유 식별자 |
+| `method` | string | ✓ | 실행할 메서드 |
+| `params` | object | - | 메서드 매개변수 |
+| `jsonrpc` | string | ✓ | JSON-RPC 버전 ("2.0") |
+| `result` | any | - | 성공 응답 데이터 |
+| `error` | object | - | 오류 정보 |
+
+## 6.5 프로토콜 스펙
+
+### JSON-RPC 2.0 기반
+
+MCP는 JSON-RPC 2.0 표준을 기반으로 하며, 다음과 같은 확장을 제공합니다:
+
+#### 기본 요청 구조
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "request-123",
+  "method": "tool/call",
+  "params": {
+    "name": "execute_code",
+    "arguments": {
+      "code": "print('Hello, MCP!')",
+      "language": "python"
+    }
+  }
+}
+```
+
+#### 성공 응답 구조
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "request-123",
+  "result": {
+    "status": "success",
+    "output": "Hello, MCP!",
+    "execution_time": 0.125
+  }
+}
+```
+
+#### 오류 응답 구조
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "request-123",
+  "error": {
+    "code": -32000,
+    "message": "Execution failed",
+    "data": {
+      "error_type": "SyntaxError",
+      "line": 1,
+      "details": "invalid syntax"
+    }
+  }
+}
+```
+
+### 표준 오류 코드
+
+| 코드 | 이름 | 설명 |
+|------|------|------|
+| `-32700` | Parse error | JSON 파싱 오류 |
+| `-32600` | Invalid Request | 잘못된 요청 형식 |
+| `-32601` | Method not found | 메서드를 찾을 수 없음 |
+| `-32602` | Invalid params | 잘못된 매개변수 |
+| `-32603` | Internal error | 내부 서버 오류 |
+| `-32000` | Server error | 서버 관련 오류 |
+| `-32001` | Tool error | 도구 실행 오류 |
+| `-32002` | Resource error | 리소스 접근 오류 |
+
+## 6.6 통신 메커니즘
+
+### 지원되는 전송 방식
+
+| 전송 방식 | 특징 | 사용 사례 |
+|-----------|------|----------|
+| **HTTP/HTTPS** | 상태 비저장, 단순함 | 웹 API, REST 서비스 |
+| **WebSocket** | 양방향, 실시간 | 실시간 통신, 스트리밍 |
+| **gRPC** | 고성능, 타입 안전 | 마이크로서비스, 고성능 앱 |
+| **stdio** | 프로세스 간 통신 | 로컬 도구, CLI 앱 |
+
+### 통신 패턴
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    
+    Note over C,S: 연결 설정
+    C->>S: initialize
+    S-->>C: initialized
+    
+    Note over C,S: 도구 실행
+    C->>S: tool/call
+    S-->>C: tool/result
+    
+    Note over C,S: 리소스 요청
+    C->>S: resource/read
+    S-->>C: resource/content
+    
+    Note over C,S: 컨텍스트 업데이트
+    S->>C: context/update (notification)
+    
+    Note over C,S: 연결 종료
+    C->>S: shutdown
+    S-->>C: shutdown_complete
+```
+
+### 세션 생명주기
+
+| 단계 | 설명 | 메시지 교환 |
+|------|------|-------------|
+| **초기화** | 클라이언트-서버 연결 설정 | `initialize` → `initialized` |
+| **협상** | 능력 및 설정 협상 | `capabilities` → `server_info` |
+| **활성** | 정상적인 요청-응답 교환 | `tool/call`, `resource/read` 등 |
+| **종료** | 세션 정리 및 연결 해제 | `shutdown` → `shutdown_complete` |
+
+### 6.7 MCP 예제
+
+```python
+# requirements.txt
+"""
+pip install mcp fastapi uvicorn requests
+"""
+
+import asyncio
+import json
+from typing import Dict, Any, List
+import autogen
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+import requests
+
+# MCP 서버 클래스
+class SimpleMCPServer:
+    def __init__(self):
+        self.tools = {
+            "get_weather": self._get_weather,
+            "calculate": self._calculate,
+            "search_code": self._search_code
+        }
+    
+    def _get_weather(self, city: str) -> Dict[str, Any]:
+        """날씨 정보를 가져오는 도구"""
+        # 실제로는 외부 API를 호출하겠지만, 여기서는 mock 데이터 반환
+        return {
+            "city": city,
+            "temperature": "22°C",
+            "condition": "맑음",
+            "humidity": "65%"
+        }
+    
+    def _calculate(self, expression: str) -> Dict[str, Any]:
+        """간단한 계산을 수행하는 도구"""
+        try:
+            result = eval(expression)  # 실제 환경에서는 보안상 ast.literal_eval 사용 권장
+            return {"expression": expression, "result": result}
+        except Exception as e:
+            return {"error": str(e)}
+    
+    def _search_code(self, query: str, language: str = "python") -> Dict[str, Any]:
+        """코드 검색 도구 (Mock)"""
+        code_examples = {
+            "python": {
+                "hello_world": "print('Hello, World!')",
+                "list_comprehension": "squares = [x**2 for x in range(10)]",
+                "function": "def greet(name):\n    return f'Hello, {name}!'"
+            },
+            "java": {
+                "hello_world": "System.out.println(\"Hello, World!\");",
+                "list": "List<String> list = new ArrayList<>();",
+                "method": "public String greet(String name) {\n    return \"Hello, \" + name + \"!\";\n}"
+            }
+        }
+        
+        examples = code_examples.get(language, {})
+        matching_code = {k: v for k, v in examples.items() if query.lower() in k.lower()}
+        
+        return {
+            "query": query,
+            "language": language,
+            "results": matching_code
+        }
+    
+    async def handle_request(self, method: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """MCP 요청 처리"""
+        if method in self.tools:
+            return self.tools[method](**params)
+        else:
+            return {"error": f"Unknown method: {method}"}
+
+# MCP 클라이언트 래퍼
+class MCPClient:
+    def __init__(self, server: SimpleMCPServer):
+        self.server = server
+    
+    async def call_tool(self, tool_name: str, **kwargs) -> Dict[str, Any]:
+        """MCP 서버의 도구를 호출"""
+        return await self.server.handle_request(tool_name, kwargs)
+
+# Autogen과 MCP를 연결하는 커스텀 에이전트
+class MCPEnabledAgent(autogen.ConversableAgent):
+    def __init__(self, name: str, mcp_client: MCPClient, **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.mcp_client = mcp_client
+        
+        # MCP 도구들을 에이전트의 함수로 등록
+        self.register_function(
+            function_map={
+                "get_weather": self._get_weather_wrapper,
+                "calculate": self._calculate_wrapper,
+                "search_code": self._search_code_wrapper
+            }
+        )
+    
+    async def _get_weather_wrapper(self, city: str) -> str:
+        """날씨 조회 래퍼"""
+        result = await self.mcp_client.call_tool("get_weather", city=city)
+        return f"{result['city']}의 날씨: {result['temperature']}, {result['condition']}, 습도: {result['humidity']}"
+    
+    async def _calculate_wrapper(self, expression: str) -> str:
+        """계산 래퍼"""
+        result = await self.mcp_client.call_tool("calculate", expression=expression)
+        if "error" in result:
+            return f"계산 오류: {result['error']}"
+        return f"{result['expression']} = {result['result']}"
+    
+    async def _search_code_wrapper(self, query: str, language: str = "python") -> str:
+        """코드 검색 래퍼"""
+        result = await self.mcp_client.call_tool("search_code", query=query, language=language)
+        if not result['results']:
+            return f"{language}에서 '{query}'에 대한 코드 예제를 찾을 수 없습니다."
+        
+        code_examples = []
+        for name, code in result['results'].items():
+            code_examples.append(f"** {name} **\n```{language}\n{code}\n```")
+        
+        return f"{language}에서 '{query}' 관련 코드 예제:\n\n" + "\n\n".join(code_examples)
+
+# 메인 실행 함수
+async def main():
+    # MCP 서버 및 클라이언트 초기화
+    mcp_server = SimpleMCPServer()
+    mcp_client = MCPClient(mcp_server)
+    
+    # Autogen 설정
+    config_list = [
+        {
+            "model": "gpt-4",
+            "api_key": "your-openai-api-key-here",  # 실제 API 키로 변경
+        }
+    ]
+    
+    config_list_azure = [
+    {
+        "model": "deploy-gpt-4o-240806-01",
+        "api_type": "azure",
+        "base_url": "https://edutech-eastus.openai.azure.com/",
+        "api_version": "2023-12-01-preview",
+        "api_key": "" # 실제 키 사용 시 주의
+    }
+    ]
+    llm_config = {
+    "cache_seed": 42, # 임의의 시드값
+    "temperature": 0.7, # LLM 응답의 다양성 제어
+    "config_list" : config_list_azure
+    }   
+    
+    # MCP 지원 에이전트들 생성
+    developer_agent = MCPEnabledAgent(
+        name="Developer",
+        mcp_client=mcp_client,
+        llm_config=llm_config,
+        system_message="""당신은 숙련된 백엔드 개발자입니다. 
+        Java와 Python에 능숙하며, 코드 생성과 문제 해결을 도와줍니다.
+        MCP 도구들을 활용하여 날씨 조회, 계산, 코드 검색 등을 수행할 수 있습니다."""
+    )
+    
+    assistant_agent = autogen.AssistantAgent(
+        name="Assistant",
+        llm_config=llm_config,
+        system_message="""당신은 도움이 되는 AI 어시스턴트입니다. 
+        Developer 에이전트와 협력하여 사용자의 요청을 처리합니다."""
+    )
+    
+    user_proxy = autogen.UserProxyAgent(
+        name="UserProxy",
+        human_input_mode="TERMINATE",
+        max_consecutive_auto_reply=10,
+        is_termination_msg=lambda x: x.get("content", "").rstrip().endswith("TERMINATE"),
+        code_execution_config={"work_dir": "coding", "use_docker": False},
+    )
+    
+    # 그룹 채팅 설정
+    groupchat = autogen.GroupChat(
+        agents=[user_proxy, developer_agent, assistant_agent],
+        messages=[],
+        max_round=10
+    )
+    
+    manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)
+    
+    # 대화 시작
+    print("=== Autogen + MCP 통합 시스템 시작 ===")
+    print("사용 가능한 MCP 도구:")
+    print("1. get_weather(city) - 날씨 조회")
+    print("2. calculate(expression) - 계산")
+    print("3. search_code(query, language) - 코드 검색")
+    print("=====================================\n")
+    
+    # 예제 대화 실행
+    initial_message = """
+    안녕하세요! 다음 작업들을 도와주세요:
+    1. 서울의 날씨를 확인해주세요
+    2. 15 * 24 + 100을 계산해주세요
+    3. Python에서 'hello' 관련 코드 예제를 찾아주세요
+    4. Java에서 'method' 관련 코드 예제를 찾아주세요
+    
+    모든 작업이 끝나면 TERMINATE로 마무리해주세요.
+    """
+    
+    await user_proxy.a_initiate_chat(
+        manager,
+        message=initial_message,
+    )
+
+# 독립 실행용 함수들 (비동기 없이 테스트)
+def test_mcp_server():
+    """MCP 서버 기능 테스트"""
+    print("=== MCP 서버 테스트 ===")
+    server = SimpleMCPServer()
+    
+    # 날씨 테스트
+    weather_result = server._get_weather("서울")
+    print(f"날씨 조회: {weather_result}")
+    
+    # 계산 테스트
+    calc_result = server._calculate("10 + 5 * 2")
+    print(f"계산 결과: {calc_result}")
+    
+    # 코드 검색 테스트
+    code_result = server._search_code("hello", "python")
+    print(f"코드 검색 결과: {code_result}")
+    
+    print("========================\n")
+
+def create_simple_demo():
+    """간단한 데모 버전 (OpenAI API 키 없이도 실행 가능)"""
+    print("=== 간단한 MCP 데모 ===")
+    
+    # MCP 서버 테스트
+    test_mcp_server()
+    
+    # Autogen 설정 (Mock)
+    print("Autogen 에이전트들이 MCP 도구를 사용하는 시뮬레이션:")
+    print("\n[Developer Agent]: 사용자 요청을 처리하겠습니다.")
+    print("[Developer Agent]: MCP 도구로 서울 날씨를 조회합니다...")
+    
+    server = SimpleMCPServer()
+    weather = server._get_weather("서울")
+    print(f"[MCP Tool Response]: {weather}")
+    
+    print("\n[Developer Agent]: 계산을 수행합니다...")
+    calc = server._calculate("15 * 24 + 100")
+    print(f"[MCP Tool Response]: {calc}")
+    
+    print("\n[Developer Agent]: Python 코드 예제를 검색합니다...")
+    code = server._search_code("hello", "python")
+    print(f"[MCP Tool Response]: {code}")
+    
+    print("\n[Assistant]: 모든 작업이 완료되었습니다. TERMINATE")
+
+if __name__ == "__main__":
+    print("Autogen + MCP 통합 샘플 코드")
+    print("1. 전체 시스템 실행 : asyncio.run(main())")
+    print("2. 간단한 데모 실행: create_simple_demo()")
+    print("\n간단한 데모를 실행합니다...\n")
+    
+    create_simple_demo()
+    
+    # 전체 시스템을 실행하려면 아래 주석을 해제하고 OpenAI API 키를 설정하세요
+    # asyncio.run(main())
+```
+
+
+
+## 6.7 도구 및 리소스
+
+### 도구 (Tools)
+
+도구는 MCP 서버에서 실행 가능한 기능을 나타냅니다.
+
+#### 도구 분류
+
+```mermaid
+graph TB
+    Tools[MCP Tools] --> Computation[계산 도구]
+    Tools --> Data[데이터 도구]
+    Tools --> IO[입출력 도구]
+    Tools --> Integration[통합 도구]
+    
+    Computation --> C1[수학 계산]
+    Computation --> C2[코드 실행]
+    Computation --> C3[알고리즘 처리]
+    
+    Data --> D1[데이터베이스 쿼리]
+    Data --> D2[데이터 변환]
+    Data --> D3[데이터 분석]
+    
+    IO --> I1[파일 읽기/쓰기]
+    IO --> I2[네트워크 통신]
+    IO --> I3[스트림 처리]
+    
+    Integration --> G1[API 호출]
+    Integration --> G2[서비스 연동]
+    Integration --> G3[워크플로우 실행]
+```
+
+#### 도구 정의 스키마
+
+| 속성 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `name` | string | ✓ | 도구 이름 (고유 식별자) |
+| `description` | string | ✓ | 도구 설명 |
+| `parameters` | object | - | 입력 매개변수 스키마 |
+| `returns` | object | - | 반환값 스키마 |
+| `examples` | array | - | 사용 예제 |
+| `tags` | array | - | 분류 태그 |
+
+### 리소스 (Resources)
+
+리소스는 MCP 서버에서 제공하는 정적 또는 동적 데이터입니다.
+
+#### 리소스 유형
+
+| 유형 | 설명 | 예시 |
+|------|------|------|
+| **구성** | 서버 설정 정보 | 설정 파일, 환경 변수 |
+| **문서** | 도움말 및 문서 | API 문서, 사용 가이드 |
+| **스키마** | 데이터 구조 정의 | JSON 스키마, 데이터 모델 |
+| **템플릿** | 재사용 가능한 패턴 | 코드 템플릿, 설정 템플릿 |
+| **데이터** | 동적 데이터 콘텐츠 | 실시간 데이터, 캐시된 결과 |
+
+#### 리소스 URI 스키마
+
+```
+mcp://[authority]/[path]?[query]#[fragment]
+```
+
+예시:
+- `mcp://config/server.json` - 서버 설정
+- `mcp://docs/api/tools` - API 문서
+- `mcp://data/users?filter=active` - 사용자 데이터
+
+### 컨텍스트 (Context)
+
+컨텍스트는 대화 상태와 히스토리를 관리합니다.
+
+#### 컨텍스트 구조
+
+```mermaid
+graph TB
+    Context[Context] --> Session[Session Info]
+    Context --> History[Conversation History]
+    Context --> State[Current State]
+    Context --> Metadata[Metadata]
+    
+    Session --> S1[Session ID]
+    Session --> S2[User Info]
+    Session --> S3[Permissions]
+    
+    History --> H1[Messages]
+    History --> H2[Actions]
+    History --> H3[Results]
+    
+    State --> T1[Variables]
+    State --> T2[Flags]
+    State --> T3[Cache]
+    
+    Metadata --> M1[Timestamps]
+    Metadata --> M2[Tags]
+    Metadata --> M3[Metrics]
+```
+
+
+
+
+
+
+## 7. 실습 환경 구성
 
 ### 환경 구성 플로우차트
 ```mermaid
@@ -2271,7 +2952,7 @@ flowchart TD
     I --> J[개발 환경 완료]
 ```
 
-### 6.1 WSL2 및 Ubuntu 배포판 설치
+### 7.1 WSL2 및 Ubuntu 배포판 설치
 
 #### PowerShell 관리자 권한으로 실행
 ```powershell
@@ -2297,7 +2978,7 @@ wsl --list --verbose
 lsb_release -a
 ```
 
-### 6.2 Python 설치
+### 7.2 Python 설치
 
 #### Ubuntu에서 Python 설치
 ```bash
@@ -2314,7 +2995,7 @@ python3 --version
 python3 -m pip install --upgrade pip
 ```
 
-### 6.3 Python 가상 환경 생성
+### 7.3 Python 가상 환경 생성
 
 #### 가상 환경 설정
 ```bash
@@ -2341,12 +3022,9 @@ pip install pyautogen==0.9.0
 pip install fastapi
 pip install uvicorn[standard]
 pip install ag2[openai]
-
-# 요구사항 파일 생성
-pip freeze > requirements.txt
 ```
 
-### 6.4 VS Code 설치
+### 7.4 VS Code 설치
 
 #### VS Code 설치 (Windows)
 1. [VS Code 공식 사이트](https://code.visualstudio.com/)에서 다운로드
@@ -2378,9 +3056,9 @@ code .
 
 
 
-## 7. 프롬프트 작성 상세 가이드
+## 8. 프롬프트 작성 상세 가이드
 
-### 7.1 프롬프트 작성의 기본 원칙
+### 8.1 프롬프트 작성의 기본 원칙
 
 ####  명확성 (Clarity)
 - **구체적이고 명확한 지시사항** 제공
@@ -2404,7 +3082,7 @@ code .
 
 ---
 
-### 7.2 효과적인 프롬프트 구조
+### 8.2 효과적인 프롬프트 구조
 
 #### 기본 템플릿
 ```
@@ -2442,7 +3120,7 @@ code .
 
 ---
 
-### 7.3 프롬프트 구성 요소
+### 8.3 프롬프트 구성 요소
 
 #### 역할 정의 (Role Definition)
 ```markdown
@@ -2504,7 +3182,7 @@ code .
 
 ---
 
-### 7.4 프롬프트 예시
+### 8.4 프롬프트 예시
 
 #### Java Spring Boot API 개발
 ```markdown
@@ -2553,7 +3231,7 @@ code .
 6. 단위 테스트 코드
 ```
 
-### 7.5 프롬프트 최적화 기법
+### 8.5 프롬프트 최적화 기법
 
 #### Few-Shot Learning(**소량 샘플 학습**)
 ```markdown
