@@ -414,6 +414,23 @@ advanced_assistant = AssistantAgent(
 # basic_example.py
 import os
 from autogen import AssistantAgent, UserProxyAgent
+
+# LLM 설정 구성
+config_list_azure = [
+    {
+        "model": "deploy-gpt-4o-240806-01",
+        "api_type": "azure",
+        "base_url": "https://edutech-eastus.openai.azure.com/",
+        "api_version": "2023-12-01-preview",
+        "api_key": "" # 실제 키 사용 시 주의
+    }
+]
+llm_config = {
+    "cache_seed": 42, # 임의의 시드값
+    "temperature": 0.7, # LLM 응답의 다양성 제어
+    "config_list" : config_list_azure
+} 
+
 # 코드 실행에 특화된 UserProxyAgent
 user_proxy = UserProxyAgent(
     name="code_executor",
@@ -432,9 +449,19 @@ user_proxy = UserProxyAgent(
                                    "TERMINATE" in msg.get("content", "")
 )
 
+# AssistantAgent 생성
+assistant = AssistantAgent(
+    name="coding_assistant",  # 에이전트 이름
+    system_message="""당신은 숙련된 Python 개발자입니다. 
+    사용자의 코딩 질문에 명확하고 실용적인 답변을 제공하세요.
+    코드 예제를 포함하여 설명해주세요.""",
+    llm_config=llm_config,
+    max_consecutive_auto_reply=3,  # 최대 3번까지 연속 응답
+)
+
 #실행 및 결과 확인
 response = user_proxy.initiate_chat(
-    user_proxy,
+    assistant,
     message="""Python으로 간단한 계산기 클래스를 만들어주세요.
     다음 기능이 포함되어야 합니다:
     1. 사칙연산 (덧셈, 뺄셈, 곱셈, 나눗셈)
@@ -2258,7 +2285,7 @@ if __name__ == "__main__":
 ## 6. MCP 개요
 MCP(Model Context Protocol)는 AI 모델과 외부 시스템 간의 표준화된 통신 프로토콜입니다. 이는 AI 에이전트가 다양한 데이터 소스, 도구, 서비스와 안전하고 효율적으로 상호작용할 수 있게 해주는 표준 인터페이스를 제공합니다.
 
-### 6.1 핵심 목표
+
 
 | 목표 | 설명 | 이점 |
 |------|------|------|
@@ -2267,29 +2294,9 @@ MCP(Model Context Protocol)는 AI 모델과 외부 시스템 간의 표준화된
 | **확장성** | 다양한 시스템과의 연동 지원 | 생태계 확장, 플러그인 아키텍처 |
 | **성능** | 효율적인 데이터 전송 및 처리 | 응답 시간 최적화, 리소스 절약 |
 
-### 6.2 MCP vs 기존 방식 비교
+### 6.1 MCP 아키텍처
 
-```mermaid
-graph TB
-    subgraph "기존 방식"
-        A1[AI Model] --> B1[Custom API 1]
-        A1 --> B2[Custom API 2]
-        A1 --> B3[Custom API 3]
-        A1 --> B4[Custom API 4]
-    end
-    
-    subgraph "MCP 방식"
-        A2[AI Model] --> MCP[MCP Interface]
-        MCP --> C1[Service 1]
-        MCP --> C2[Service 2]
-        MCP --> C3[Service 3]
-        MCP --> C4[Service 4]
-    end
-```
-
-## 6.3 MCP 아키텍처
-
-### 전체 아키텍처
+#### 전체 아키텍처
 
 ```mermaid
 graph TB
@@ -2337,7 +2344,7 @@ graph TB
     Context --> Cloud
 ```
 
-### 계층별 역할
+#### 계층별 역할
 
 | 계층 | 역할 | 주요 기능 |
 |------|------|----------|
@@ -2346,9 +2353,9 @@ graph TB
 | **Server Layer** | 서비스 제공 및 리소스 관리 | 도구 실행, 리소스 제공, 컨텍스트 관리 |
 | **External Systems** | 실제 데이터 및 서비스 | 데이터 저장소, 외부 API, 클라우드 서비스 |
 
-## 6.4 MCP 구성 요소
+### 6.2 MCP 구성 요소
 
-### 클라이언트 (Client)
+#### 클라이언트 (Client)
 
 ```mermaid
 graph LR
@@ -2374,7 +2381,7 @@ graph LR
 | **Event Manager** | 이벤트 처리 | 서버 이벤트 수신, 콜백 처리 |
 | **Session Manager** | 세션 관리 | 세션 생성, 유지, 종료 |
 
-### 서버 (Server)
+#### 서버 (Server)
 
 ```mermaid
 graph TB
@@ -2410,7 +2417,7 @@ graph TB
     RM --> R4
 ```
 
-#### 서버 구성 요소 상세
+##### 서버 구성 요소 상세
 
 | 매니저 | 관리 대상 | 주요 기능 |
 |---------|-----------|----------|
@@ -2419,9 +2426,9 @@ graph TB
 | **Context Manager** | 컨텍스트 정보 | 상태 관리, 히스토리 추적 |
 | **Security Manager** | 보안 정책 | 인증, 권한 검사, 감사 로그 |
 
-### 프로토콜 메시지
+#### 프로토콜 메시지
 
-#### 메시지 타입 분류
+##### 메시지 타입 분류
 
 ```mermaid
 graph TD
@@ -2441,7 +2448,7 @@ graph TD
     Notification --> N3[server/status]
 ```
 
-#### 메시지 구조
+##### 메시지 구조
 
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
@@ -2452,9 +2459,9 @@ graph TD
 | `result` | any | - | 성공 응답 데이터 |
 | `error` | object | - | 오류 정보 |
 
-## 6.5 프로토콜 스펙
+### 6.3 프로토콜 스펙
 
-### JSON-RPC 2.0 기반
+#### JSON-RPC 2.0 기반
 
 MCP는 JSON-RPC 2.0 표준을 기반으로 하며, 다음과 같은 확장을 제공합니다:
 
@@ -2504,7 +2511,7 @@ MCP는 JSON-RPC 2.0 표준을 기반으로 하며, 다음과 같은 확장을 �
 }
 ```
 
-### 표준 오류 코드
+#### 표준 오류 코드
 
 | 코드 | 이름 | 설명 |
 |------|------|------|
@@ -2517,9 +2524,9 @@ MCP는 JSON-RPC 2.0 표준을 기반으로 하며, 다음과 같은 확장을 �
 | `-32001` | Tool error | 도구 실행 오류 |
 | `-32002` | Resource error | 리소스 접근 오류 |
 
-## 6.6 통신 메커니즘
+### 6.4 통신 메커니즘
 
-### 지원되는 전송 방식
+#### 지원되는 전송 방식
 
 | 전송 방식 | 특징 | 사용 사례 |
 |-----------|------|----------|
@@ -2528,7 +2535,7 @@ MCP는 JSON-RPC 2.0 표준을 기반으로 하며, 다음과 같은 확장을 �
 | **gRPC** | 고성능, 타입 안전 | 마이크로서비스, 고성능 앱 |
 | **stdio** | 프로세스 간 통신 | 로컬 도구, CLI 앱 |
 
-### 통신 패턴
+#### 통신 패턴
 
 ```mermaid
 sequenceDiagram
@@ -2555,7 +2562,7 @@ sequenceDiagram
     S-->>C: shutdown_complete
 ```
 
-### 세션 생명주기
+#### 세션 생명주기
 
 | 단계 | 설명 | 메시지 교환 |
 |------|------|-------------|
@@ -2564,7 +2571,7 @@ sequenceDiagram
 | **활성** | 정상적인 요청-응답 교환 | `tool/call`, `resource/read` 등 |
 | **종료** | 세션 정리 및 연결 해제 | `shutdown` → `shutdown_complete` |
 
-### 6.7 MCP 예제
+### 6.5 MCP 예제
 
 ```python
 # requirements.txt
@@ -2833,13 +2840,13 @@ if __name__ == "__main__":
 
 
 
-## 6.7 도구 및 리소스
+### 6.6 도구 및 리소스
 
-### 도구 (Tools)
+#### 도구 (Tools)
 
 도구는 MCP 서버에서 실행 가능한 기능을 나타냅니다.
 
-#### 도구 분류
+##### 도구 분류
 
 ```mermaid
 graph TB
