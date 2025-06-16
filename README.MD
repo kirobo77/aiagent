@@ -698,13 +698,35 @@ Agent 생성 시 function_map 매개변수에 에 함수명을 키로, 함수 �
 #### 함수 등록 예시
 
 ```python
-import json
-import requests
-import from typing import Annotated
+# verbose_example.py
+import os
+import logging
+import autogen
 
-def search_documentation(query: Annotated[str, "검색 쿼리 텍스트 (테이블 이름, 컬럼 이름, 관계 등 스키마 관련 키워드)"], language: str = "python") -> str:
+"""상세 로깅을 활성화한 AutoGen 예제"""
+print("===== 상세 로깅 AutoGen 예제 시작 =====")
+
+
+# LLM 설정 구성
+config_list_azure = [
+    {
+        "model": "deploy-gpt-4o-240806-01",
+        "api_type": "azure",
+        "base_url": "https://edutech-eastus.openai.azure.com/",
+        "api_version": "2023-12-01-preview",
+        "api_key": "" # 실제 키 사용 시 주의
+    }
+]
+llm_config = {
+    "cache_seed": 42, # 임의의 시드값
+    "temperature": 0.3, # LLM 응답의 다양성 제어
+    "config_list" : config_list_azure
+} 
+
+
+def search_documentation(query: str, language: str = "python") -> str:
     """
-    온라인 문서에서 정보를 검색합니다.
+    온라인 문서에서 python 정보를 검색합니다.
     
     Args:
         query (str): 검색할 키워드
@@ -731,24 +753,66 @@ def execute_code_analysis(code: str) -> dict:
         "complexity": "Medium",
         "suggestions": ["변수명 개선", "주석 추가"]
     }
-
-# Agent에 함수 등록(동적)
-code_generator.register_for_execution(name="search_documentation")(search_documentation)
-code_generator.register_for_llm(name="search_documentation", description="문서 검색 함수")(search_documentation)
-
-code_reviewer.register_for_execution(name="execute_code_analysis")(execute_code_analysis)
-code_reviewer.register_for_llm(name="execute_code_analysis", description="코드 분석 함수")(execute_code_analysis)
-
-# function_map 생성(정적)
-function_map = {
-    "search_documentation": search_documentation
-    "execute_code_analysis": execute_code_analysis
-}
-# Agent 생성 시 함수 등록
-agent = AssistantAgent(
-    #기존코드
-    function_map=function_map
+    
+    
+# AssistantAgent 생성
+assistant = autogen.AssistantAgent(
+    name="coding_assistant",  # 에이전트 이름
+    system_message="""
+        역할:
+        - 당신은 숙련된 Python 분석가 입니다.
+        - 사용자의 요청에 따라 적절한 답변을 제공합니다.
+        전제 조건:
+        - 사용자의 요청이 Python 사용법 및 코드 분석일 경우, 반드시 함수 호출을 실행합니다.
+        - 호출 결과를 바탕으로 사용자 및 다른 에이전트에게 유용한 정보를 제공합니다.
+    """,
+    llm_config=llm_config,
+    max_consecutive_auto_reply=1,  # 최대 3번까지 연속 응답
 )
+
+# UserProxyAgent 생성
+user_proxy = autogen.UserProxyAgent(
+    name="code_executor",
+    system_message="""        
+        역할:
+        - 사용자 역할을 대변하며, 다른 에이전트들의 응답을 취합 합니다.
+        - 최종 사용자에게 전달할 응답을 결정하거나, 대화를 종료해야 할 시점을 판단할 수 있습니다.
+        
+        전제 조건:
+        - 사용자의 요청이 특정 코드 내용 검색이나 기존 코드 구조에 대한 질문일 경우, 반드시 함수 호출을 실행합니다.
+        - 호출 결과를 바탕으로 사용자 및 다른 에이전트에게 유용한 정보를 제공합니다.
+    """,
+    human_input_mode="NEVER",
+    code_execution_config={
+        "work_dir": "./",
+        "use_docker": False,
+    },
+)
+
+user_proxy.register_for_execution(name="search_documentation")(search_documentation)
+user_proxy.register_for_execution(name="execute_code_analysis")(execute_code_analysis)
+
+assistant.register_for_llm(name="execute_code_analysis", description="코드 분석 함수")(execute_code_analysis)
+assistant.register_for_llm(name="search_documentation", description="문서 검색 함수")(search_documentation)
+
+# 메시지 전송
+messages = "python에서 List에 대해서 설명해줘"
+
+# 응답 생성
+print("응답 요청 중...")
+
+response = user_proxy.initiate_chat(
+    assistant,
+    message=messages
+)
+
+print("\n===== 응답 내용 =====")
+print(f"응답 내용:\n{response}")
+
+print("===== 상세 로깅 AutoGen 예제 종료 =====")
+
+
+
 ```
 
 
