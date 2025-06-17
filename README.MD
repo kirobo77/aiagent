@@ -1501,13 +1501,11 @@ class SimpleChatbotManager:
             
             # 비동기 방식으로 대화 시작
             # initiate_chat 메서드를 통해 UserProxy가 Assistant와 대화 시작
-            chat_result = await asyncio.to_thread(
-                self.user_proxy.initiate_chat,
+            chat_result = await self.user_proxy.a_initiate_chat(
                 self.assistant,
                 message=user_message,
-                silent=True  # 중간 과정 출력 억제
-            )
-     
+                silent=True
+            )     
             
             # 대화 결과에서 마지막 응답 추출
             if hasattr(chat_result, 'chat_history') and chat_result.chat_history:
