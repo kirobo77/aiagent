@@ -2631,276 +2631,9 @@ sequenceDiagram
 | **활성** | 정상적인 요청-응답 교환 | `tool/call`, `resource/read` 등 |
 | **종료** | 세션 정리 및 연결 해제 | `shutdown` → `shutdown_complete` |
 
-### 6.5 MCP 예제
-
-```python
-# requirements.txt
-"""
-pip install mcp fastapi uvicorn requests
-"""
-
-import asyncio
-import json
-from typing import Dict, Any, List
-import autogen
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
-import requests
-
-# MCP 서버 클래스
-class SimpleMCPServer:
-    def __init__(self):
-        self.tools = {
-            "get_weather": self._get_weather,
-            "calculate": self._calculate,
-            "search_code": self._search_code
-        }
-    
-    def _get_weather(self, city: str) -> Dict[str, Any]:
-        """날씨 정보를 가져오는 도구"""
-        # 실제로는 외부 API를 호출하겠지만, 여기서는 mock 데이터 반환
-        return {
-            "city": city,
-            "temperature": "22°C",
-            "condition": "맑음",
-            "humidity": "65%"
-        }
-    
-    def _calculate(self, expression: str) -> Dict[str, Any]:
-        """간단한 계산을 수행하는 도구"""
-        try:
-            result = eval(expression)  # 실제 환경에서는 보안상 ast.literal_eval 사용 권장
-            return {"expression": expression, "result": result}
-        except Exception as e:
-            return {"error": str(e)}
-    
-    def _search_code(self, query: str, language: str = "python") -> Dict[str, Any]:
-        """코드 검색 도구 (Mock)"""
-        code_examples = {
-            "python": {
-                "hello_world": "print('Hello, World!')",
-                "list_comprehension": "squares = [x**2 for x in range(10)]",
-                "function": "def greet(name):\n    return f'Hello, {name}!'"
-            },
-            "java": {
-                "hello_world": "System.out.println(\"Hello, World!\");",
-                "list": "List<String> list = new ArrayList<>();",
-                "method": "public String greet(String name) {\n    return \"Hello, \" + name + \"!\";\n}"
-            }
-        }
-        
-        examples = code_examples.get(language, {})
-        matching_code = {k: v for k, v in examples.items() if query.lower() in k.lower()}
-        
-        return {
-            "query": query,
-            "language": language,
-            "results": matching_code
-        }
-    
-    async def handle_request(self, method: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        """MCP 요청 처리"""
-        if method in self.tools:
-            return self.tools[method](**params)
-        else:
-            return {"error": f"Unknown method: {method}"}
-
-# MCP 클라이언트 래퍼
-class MCPClient:
-    def __init__(self, server: SimpleMCPServer):
-        self.server = server
-    
-    async def call_tool(self, tool_name: str, **kwargs) -> Dict[str, Any]:
-        """MCP 서버의 도구를 호출"""
-        return await self.server.handle_request(tool_name, kwargs)
-
-# Autogen과 MCP를 연결하는 커스텀 에이전트
-class MCPEnabledAgent(autogen.ConversableAgent):
-    def __init__(self, name: str, mcp_client: MCPClient, **kwargs):
-        super().__init__(name=name, **kwargs)
-        self.mcp_client = mcp_client
-        
-        # MCP 도구들을 에이전트의 함수로 등록
-        self.register_function(
-            function_map={
-                "get_weather": self._get_weather_wrapper,
-                "calculate": self._calculate_wrapper,
-                "search_code": self._search_code_wrapper
-            }
-        )
-    
-    async def _get_weather_wrapper(self, city: str) -> str:
-        """날씨 조회 래퍼"""
-        result = await self.mcp_client.call_tool("get_weather", city=city)
-        return f"{result['city']}의 날씨: {result['temperature']}, {result['condition']}, 습도: {result['humidity']}"
-    
-    async def _calculate_wrapper(self, expression: str) -> str:
-        """계산 래퍼"""
-        result = await self.mcp_client.call_tool("calculate", expression=expression)
-        if "error" in result:
-            return f"계산 오류: {result['error']}"
-        return f"{result['expression']} = {result['result']}"
-    
-    async def _search_code_wrapper(self, query: str, language: str = "python") -> str:
-        """코드 검색 래퍼"""
-        result = await self.mcp_client.call_tool("search_code", query=query, language=language)
-        if not result['results']:
-            return f"{language}에서 '{query}'에 대한 코드 예제를 찾을 수 없습니다."
-        
-        code_examples = []
-        for name, code in result['results'].items():
-            code_examples.append(f"** {name} **\n```{language}\n{code}\n```")
-        
-        return f"{language}에서 '{query}' 관련 코드 예제:\n\n" + "\n\n".join(code_examples)
-
-# 메인 실행 함수
-async def main():
-    # MCP 서버 및 클라이언트 초기화
-    mcp_server = SimpleMCPServer()
-    mcp_client = MCPClient(mcp_server)
-    
-    # Autogen 설정
-    config_list = [
-        {
-            "model": "gpt-4",
-            "api_key": "your-openai-api-key-here",  # 실제 API 키로 변경
-        }
-    ]
-    
-    config_list_azure = [
-    {
-        "model": "deploy-gpt-4o-240806-01",
-        "api_type": "azure",
-        "base_url": "https://edutech-eastus.openai.azure.com/",
-        "api_version": "2023-12-01-preview",
-        "api_key": "" # 실제 키 사용 시 주의
-    }
-    ]
-    llm_config = {
-    "cache_seed": 42, # 임의의 시드값
-    "temperature": 0.7, # LLM 응답의 다양성 제어
-    "config_list" : config_list_azure
-    }   
-    
-    # MCP 지원 에이전트들 생성
-    developer_agent = MCPEnabledAgent(
-        name="Developer",
-        mcp_client=mcp_client,
-        llm_config=llm_config,
-        system_message="""당신은 숙련된 백엔드 개발자입니다. 
-        Java와 Python에 능숙하며, 코드 생성과 문제 해결을 도와줍니다.
-        MCP 도구들을 활용하여 날씨 조회, 계산, 코드 검색 등을 수행할 수 있습니다."""
-    )
-    
-    assistant_agent = autogen.AssistantAgent(
-        name="Assistant",
-        llm_config=llm_config,
-        system_message="""당신은 도움이 되는 AI 어시스턴트입니다. 
-        Developer 에이전트와 협력하여 사용자의 요청을 처리합니다."""
-    )
-    
-    user_proxy = autogen.UserProxyAgent(
-        name="UserProxy",
-        human_input_mode="TERMINATE",
-        max_consecutive_auto_reply=10,
-        is_termination_msg=lambda x: x.get("content", "").rstrip().endswith("TERMINATE"),
-        code_execution_config={"work_dir": "coding", "use_docker": False},
-    )
-    
-    # 그룹 채팅 설정
-    groupchat = autogen.GroupChat(
-        agents=[user_proxy, developer_agent, assistant_agent],
-        messages=[],
-        max_round=10
-    )
-    
-    manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)
-    
-    # 대화 시작
-    print("=== Autogen + MCP 통합 시스템 시작 ===")
-    print("사용 가능한 MCP 도구:")
-    print("1. get_weather(city) - 날씨 조회")
-    print("2. calculate(expression) - 계산")
-    print("3. search_code(query, language) - 코드 검색")
-    print("=====================================\n")
-    
-    # 예제 대화 실행
-    initial_message = """
-    안녕하세요! 다음 작업들을 도와주세요:
-    1. 서울의 날씨를 확인해주세요
-    2. 15 * 24 + 100을 계산해주세요
-    3. Python에서 'hello' 관련 코드 예제를 찾아주세요
-    4. Java에서 'method' 관련 코드 예제를 찾아주세요
-    
-    모든 작업이 끝나면 TERMINATE로 마무리해주세요.
-    """
-    
-    await user_proxy.a_initiate_chat(
-        manager,
-        message=initial_message,
-    )
-
-# 독립 실행용 함수들 (비동기 없이 테스트)
-def test_mcp_server():
-    """MCP 서버 기능 테스트"""
-    print("=== MCP 서버 테스트 ===")
-    server = SimpleMCPServer()
-    
-    # 날씨 테스트
-    weather_result = server._get_weather("서울")
-    print(f"날씨 조회: {weather_result}")
-    
-    # 계산 테스트
-    calc_result = server._calculate("10 + 5 * 2")
-    print(f"계산 결과: {calc_result}")
-    
-    # 코드 검색 테스트
-    code_result = server._search_code("hello", "python")
-    print(f"코드 검색 결과: {code_result}")
-    
-    print("========================\n")
-
-def create_simple_demo():
-    """간단한 데모 버전 (OpenAI API 키 없이도 실행 가능)"""
-    print("=== 간단한 MCP 데모 ===")
-    
-    # MCP 서버 테스트
-    test_mcp_server()
-    
-    # Autogen 설정 (Mock)
-    print("Autogen 에이전트들이 MCP 도구를 사용하는 시뮬레이션:")
-    print("\n[Developer Agent]: 사용자 요청을 처리하겠습니다.")
-    print("[Developer Agent]: MCP 도구로 서울 날씨를 조회합니다...")
-    
-    server = SimpleMCPServer()
-    weather = server._get_weather("서울")
-    print(f"[MCP Tool Response]: {weather}")
-    
-    print("\n[Developer Agent]: 계산을 수행합니다...")
-    calc = server._calculate("15 * 24 + 100")
-    print(f"[MCP Tool Response]: {calc}")
-    
-    print("\n[Developer Agent]: Python 코드 예제를 검색합니다...")
-    code = server._search_code("hello", "python")
-    print(f"[MCP Tool Response]: {code}")
-    
-    print("\n[Assistant]: 모든 작업이 완료되었습니다. TERMINATE")
-
-if __name__ == "__main__":
-    print("Autogen + MCP 통합 샘플 코드")
-    print("1. 전체 시스템 실행 : asyncio.run(main())")
-    print("2. 간단한 데모 실행: create_simple_demo()")
-    print("\n간단한 데모를 실행합니다...\n")
-    
-    create_simple_demo()
-    
-    # 전체 시스템을 실행하려면 아래 주석을 해제하고 OpenAI API 키를 설정하세요
-    # asyncio.run(main())
-```
 
 
-
-### 6.6 도구 및 리소스
+### 6.5 도구 및 리소스
 
 #### 도구 (Tools)
 
@@ -2934,14 +2667,14 @@ graph TB
 
 #### 도구 정의 스키마
 
-| 속성 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| `name` | string | ✓ | 도구 이름 (고유 식별자) |
-| `description` | string | ✓ | 도구 설명 |
-| `parameters` | object | - | 입력 매개변수 스키마 |
-| `returns` | object | - | 반환값 스키마 |
-| `examples` | array | - | 사용 예제 |
-| `tags` | array | - | 분류 태그 |
+| 속성          | 타입   | 필수 | 설명                    |
+| ------------- | ------ | ---- | ----------------------- |
+| `name`        | string | ✓    | 도구 이름 (고유 식별자) |
+| `description` | string | ✓    | 도구 설명               |
+| `parameters`  | object | -    | 입력 매개변수 스키마    |
+| `returns`     | object | -    | 반환값 스키마           |
+| `examples`    | array  | -    | 사용 예제               |
+| `tags`        | array  | -    | 분류 태그               |
 
 ### 리소스 (Resources)
 
@@ -2949,12 +2682,12 @@ graph TB
 
 #### 리소스 유형
 
-| 유형 | 설명 | 예시 |
-|------|------|------|
-| **구성** | 서버 설정 정보 | 설정 파일, 환경 변수 |
-| **문서** | 도움말 및 문서 | API 문서, 사용 가이드 |
-| **스키마** | 데이터 구조 정의 | JSON 스키마, 데이터 모델 |
-| **템플릿** | 재사용 가능한 패턴 | 코드 템플릿, 설정 템플릿 |
+| 유형       | 설명               | 예시                       |
+| ---------- | ------------------ | -------------------------- |
+| **구성**   | 서버 설정 정보     | 설정 파일, 환경 변수       |
+| **문서**   | 도움말 및 문서     | API 문서, 사용 가이드      |
+| **스키마** | 데이터 구조 정의   | JSON 스키마, 데이터 모델   |
+| **템플릿** | 재사용 가능한 패턴 | 코드 템플릿, 설정 템플릿   |
 | **데이터** | 동적 데이터 콘텐츠 | 실시간 데이터, 캐시된 결과 |
 
 #### 리소스 URI 스키마
@@ -2964,6 +2697,7 @@ mcp://[authority]/[path]?[query]#[fragment]
 ```
 
 예시:
+
 - `mcp://config/server.json` - 서버 설정
 - `mcp://docs/api/tools` - API 문서
 - `mcp://data/users?filter=active` - 사용자 데이터
@@ -2996,6 +2730,347 @@ graph TB
     Metadata --> M1[Timestamps]
     Metadata --> M2[Tags]
     Metadata --> M3[Metrics]
+```
+
+
+
+### 6.6 MCP 예제
+
+#### stdio 기반(로컬)
+
+##### mcp 서버
+
+```python
+# mcp_server.py
+# pip install mcp 
+import argparse
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("McpServer")
+
+@mcp.tool()
+def add(a: int, b: int) -> int:
+    """Add two numbers"""
+    return a + b
+
+@mcp.tool()
+def multiply(a: int, b: int) -> int:
+    """Multiply two numbers"""
+    return a * b
+
+files = {
+    "ag2": "AG has released 0.8.5 version on 2025-04-03",
+}
+
+@mcp.resource("server-file://{name}")
+def get_server_file(name: str) -> str:
+    """Get a file content"""
+    return files.get(name, f"File not found: {name}")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="MCP Server")
+    parser.add_argument("transport", choices=["stdio", "sse"], help="Transport mode (stdio or sse)")
+    args = parser.parse_args()
+
+    mcp.run(transport=args.transport)
+
+```
+##### MCP 클라이언트
+
+```python
+# mcp_client.py
+import asyncio
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+from autogen import LLMConfig
+from autogen.agentchat import AssistantAgent
+from autogen.mcp import create_toolkit
+
+config_list_azure = [
+    {
+        "model": "deploy-gpt-4o-240806-01",
+        "api_type": "azure",
+        "base_url": "https://edutech-eastus.openai.azure.com/",
+        "api_version": "2023-12-01-preview",
+        "api_key": "" # 실제 키 사용 시 주의
+    }
+]
+llm_config = {
+    "cache_seed": 42, # 임의의 시드값
+    "temperature": 0.7, # LLM 응답의 다양성 제어
+    "config_list" : config_list_azure
+} 
+
+async def create_toolkit_and_run(session: ClientSession):
+    # MCP 서버에서 도구와 리소스를 Toolkit으로 래핑
+    toolkit = await create_toolkit(session=session)
+    
+    # AG2/AutoGen AssistantAgent 생성
+    agent = AssistantAgent(
+        name="assistant",
+        llm_config=llm_config
+    )
+    
+    # Toolkit의 도구를 에이전트에 등록
+    toolkit.register_for_llm(agent)
+    
+    # MCP 도구를 사용하여 작업 실행
+    result = await agent.a_run(
+        message="""1. Add 123223 and 456789
+2. Get file content for 'ag2'.""",
+        tools=toolkit.tools,
+        max_turns=2,
+        user_input=False,
+    )
+    await result.process()
+
+async def main():
+    # MCP 서버 파라미터 (예: stdio 모드)
+    server_params = StdioServerParameters(
+        command="python",
+        args=["mcp_server.py", "stdio"],
+    )
+    async with stdio_client(server_params) as (read, write), ClientSession(read, write) as session:
+        await session.initialize()
+        await create_toolkit_and_run(session)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+```
+
+#### http 기반(리모트)
+
+##### mcp 서버
+
+```python
+# pip 
+# pip install fastapi_mcp
+from typing import List
+from mcp.server.fastmcp import FastMCP
+import json
+import logging
+import sys
+
+# 로깅 설정
+logging.basicConfig(
+    level=logging.DEBUG,  # 로그 레벨: DEBUG, INFO, WARNING 등
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger("mcp-server")
+
+# MCP 서버 생성
+mcp = FastMCP("WeatherAndUtils", debug=True)
+
+@mcp.tool()
+async def get_weather(location: str) -> str:
+    """Get weather information for a specific location."""
+    # 실제 날씨 API 대신 시뮬레이션된 데이터 반환
+    weather_data = {
+        "seoul": "서울: 맑음, 22°C, 습도 60%",
+        "new york": "뉴욕: 흐림, 18°C, 습도 75%", 
+        "tokyo": "도쿄: 비, 16°C, 습도 85%",
+        "london": "런던: 안개, 12°C, 습도 90%"
+    }
+    
+    location_lower = location.lower()
+    if location_lower in weather_data:
+        return weather_data[location_lower]
+    else:
+        return f"{location}: 날씨 정보를 찾을 수 없습니다. 사용 가능한 도시: Seoul, New York, Tokyo, London"
+
+@mcp.tool()
+async def calculate(expression: str) -> str:
+    """Calculate mathematical expressions safely."""
+    try:
+        # 안전한 계산을 위해 eval 대신 간단한 파싱 사용
+        allowed_chars = set('0123456789+-*/(). ')
+        if not all(c in allowed_chars for c in expression):
+            return "오류: 허용되지 않는 문자가 포함되어 있습니다."
+        
+        result = eval(expression)
+        return f"{expression} = {result}"
+    except Exception as e:
+        return f"계산 오류: {str(e)}"
+
+@mcp.tool()
+async def get_file_info(filename: str) -> str:
+    """Get information about a file (simulated)."""
+    # 실제 파일 시스템 대신 시뮬레이션된 파일 정보
+    file_info = {
+        "ag2": {
+            "type": "directory",
+            "description": "AutoGen 2.0 프로젝트 디렉토리",
+            "contents": ["src/", "tests/", "docs/", "requirements.txt", "README.md"],
+            "size": "15.2 MB"
+        },
+        "config.json": {
+            "type": "file",
+            "description": "설정 파일",
+            "contents": "JSON 형식의 애플리케이션 설정",
+            "size": "2.1 KB"
+        },
+        "main.py": {
+            "type": "file", 
+            "description": "메인 애플리케이션 파일",
+            "contents": "Python 메인 실행 코드",
+            "size": "8.5 KB"
+        }
+    }
+    
+    if filename in file_info:
+        info = file_info[filename]
+        return json.dumps(info, ensure_ascii=False, indent=2)
+    else:
+        return f"파일 '{filename}'을 찾을 수 없습니다. 사용 가능한 파일: {list(file_info.keys())}"
+
+@mcp.tool()
+async def list_tools() -> str:
+    """List all available tools in this MCP server."""
+    tools = [
+        "get_weather(location): 특정 위치의 날씨 정보 조회",
+        "calculate(expression): 수학 계산 수행",
+        "get_file_info(filename): 파일 정보 조회",
+        "list_tools(): 사용 가능한 도구 목록 표시"
+    ]
+    return "사용 가능한 도구들:\n" + "\n".join(f"- {tool}" for tool in tools)
+
+if __name__ == "__main__":
+    print("🚀 MCP 서버 시작 중...")
+    print("📍 서버 주소: http://127.0.0.1:8000/mcp")
+    print("🛠️  사용 가능한 도구: get_weather, calculate, get_file_info, list_tools")
+    mcp.run(transport="streamable-http")
+```
+
+##### MCP 클라이언트
+
+```python
+import asyncio
+import os
+from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
+from autogen_ext.tools.mcp import StreamableHttpMcpToolAdapter, StreamableHttpServerParams, mcp_server_tools
+from autogen_agentchat.agents import AssistantAgent
+from autogen_agentchat.ui import Console
+from autogen_core import CancellationToken
+from datetime import timedelta
+import logging
+from autogen_agentchat import EVENT_LOGGER_NAME, TRACE_LOGGER_NAME
+
+# Trace 로그 (디버깅용)
+trace_logger = logging.getLogger(TRACE_LOGGER_NAME)
+trace_logger.addHandler(logging.StreamHandler())
+trace_logger.setLevel(logging.DEBUG)
+
+# 이벤트 로그 (구조화 메시지)
+event_logger = logging.getLogger(EVENT_LOGGER_NAME)
+event_logger.addHandler(logging.StreamHandler())
+event_logger.setLevel(logging.DEBUG)
+
+async def setup_mcp_tools():
+    """MCP 서버에서 도구들을 설정"""
+    server_params = StreamableHttpServerParams(
+        url="http://127.0.0.1:8000/mcp",
+        timeout=timedelta(seconds=30),
+        sse_read_timeout=timedelta(seconds=300),
+        terminate_on_close=True
+    )
+    
+    tools = await mcp_server_tools(server_params)
+    #tools = []
+    #tool_names = ["get_weather", "calculate", "get_file_info", "list_tools"]
+    
+    #for tool_name in tool_names:
+    #    try:
+    #        adapter = await StreamableHttpMcpToolAdapter.from_server_params(
+    #            server_params, tool_names
+    #        )
+    #        tools.append(adapter)
+    #        print(f"✅ {tool_name} 도구 연결 성공")
+    #    except Exception as e:
+    #        print(f"❌ {tool_name} 도구 연결 실패: {e}")
+    
+    return tools
+
+async def setup_azure_client():
+    """Azure OpenAI 클라이언트 설정"""
+    try:
+         
+        model_client = AzureOpenAIChatCompletionClient(
+            model="gpt-4o",
+            azure_endpoint= "https://edutech-eastus.openai.azure.com/",
+            api_version= "2023-12-01-preview",
+            api_key= "a634b87afef5450e8b3a6e729a809c5f",
+            azure_deployment="deploy-gpt-4o-240806-01"
+            )
+        
+        print("✅ Azure OpenAI 클라이언트 설정 완료 (표준 모델명)")
+        return model_client
+    except Exception as e:
+        print(f"⚠️ 표준 모델명 설정 실패, 커스텀 모델 정보로 재시도: {e}")
+
+async def main():
+    print("🚀 Autogen MCP 클라이언트 시작\n")
+    
+    try:
+        # 1. MCP 도구 설정
+        print("🔧 MCP 도구 연결 중...")
+        tools = await setup_mcp_tools()
+        
+        if not tools:
+            print("❌ MCP 도구를 찾을 수 없습니다. MCP 서버가 실행되고 있는지 확인하세요.")
+            return
+        
+        # 2. Azure OpenAI 클라이언트 설정
+        print("\n🤖 Azure OpenAI 클라이언트 설정 중...")
+        model_client = await setup_azure_client()
+        
+        # 3. Assistant Agent 생성
+        print("\n👨‍💼 Assistant Agent 생성 중...")
+        agent = AssistantAgent(
+            name="versatile_assistant",
+            model_client=model_client,
+            tools=tools,
+            system_message="""You are a versatile assistant with access to weather, calculation, and file information tools.
+
+Available tools:
+- get_weather(location): Get weather information for a location
+- calculate(expression): Perform mathematical calculations  
+- get_file_info(filename): Get information about files
+- list_tools(): Show all available tools
+
+Always use the appropriate tools when asked to perform tasks that match their capabilities.
+Provide clear, helpful responses and explain what tools you're using."""
+        )
+        
+        # 4. 작업 실행
+        print("\n🎯 작업 실행 중...\n")
+        await Console(
+            agent.run_stream(
+                task="""안녕하세요! 다음 작업들을 도와주세요:
+
+1. 123223 + 456789를 계산해주세요
+2. 'ag2' 파일의 정보를 조회해주세요  
+3. 서울의 현재 날씨를 알려주세요
+4. 사용 가능한 모든 도구 목록을 보여주세요
+
+각 작업에 적절한 도구를 사용해서 수행해주세요.""",
+                cancellation_token=CancellationToken()
+            )
+        )
+        
+    except Exception as e:
+        print(f"\n❌ 오류 발생: {e}")
+        print("\n🔧 문제 해결 방법:")
+        print("1. MCP 서버가 실행되고 있는지 확인 (python mcp_server.py)")
+        print("2. 환경변수가 올바르게 설정되어 있는지 확인")
+        print("3. Azure OpenAI 배포명과 엔드포인트 확인")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+   
+
 ```
 
 
