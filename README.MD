@@ -2915,13 +2915,13 @@ Resource Templates에서 get_greeting을 Tools에서 add를 확인 가능합니�
 
 이제 Claude Desktop을 실행시키면 도구와 mcp 서버가 연동된 것을 볼 수 있다.
 
-![image-20250624103600292](C:\Users\kirob\AppData\Roaming\Typora\typora-user-images\image-20250624103600292.png)
+![image-20250624103600292](images/image-20250624103600292.png)
 
-![image-20250624103707884](C:\Users\kirob\AppData\Roaming\Typora\typora-user-images\image-20250624103707884.png)
+![image-20250624103707884](images/image-20250624103707884.png)
 
 1+2를 질문한다.
 
-![image-20250624103753675](C:\Users\kirob\AppData\Roaming\Typora\typora-user-images\image-20250624103753675.png)
+![image-20250624103753675](images/image-20250624103753675.png)
 
 
 
