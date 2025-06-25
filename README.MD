@@ -2343,7 +2343,9 @@ if __name__ == "__main__":
 
 
 ## 6. MCP 개요
-MCP(Model Context Protocol)는 AI 모델과 외부 시스템 간의 표준화된 통신 프로토콜입니다. 이는 AI 에이전트가 다양한 데이터 소스, 도구, 서비스와 안전하고 효율적으로 상호작용할 수 있게 해주는 표준 인터페이스를 제공합니다.
+Model Context Protocol(MCP)는 LLM 애플리케이션과 외부 데이터 소스 및 도구 간의 원활한 연동을 가능하게 해주는 오픈 프로토콜. 
+AI 기반 IDE를 만들거나, 채팅 인터페이스를 개선하거나, 맞춤형 AI 워크플로우를 구축하든 MCP는 LLM이 필요한 컨텍스트에 표준화된 방식으로 접근할 수 있는 환경 제공.
+LLM이 내가 사용하는 어플리케이션을 하나의 도구로 활용할 수 있게 만들어주는 방법.
 
 
 
@@ -2354,7 +2356,80 @@ MCP(Model Context Protocol)는 AI 모델과 외부 시스템 간의 표준화된
 | **확장성** | 다양한 시스템과의 연동 지원 | 생태계 확장, 플러그인 아키텍처 |
 | **성능** | 효율적인 데이터 전송 및 처리 | 응답 시간 최적화, 리소스 절약 |
 
-### 6.1 MCP 아키텍처
+
+
+### 6.1 MCP 장점
+
+MCP는 LLM(대형 언어 모델)을 기반으로 에이전트와 복잡한 워크플로우를 구축할 수 있도록 도와주는 플랫폼. 
+LLM은 종종 다양한 데이터나 도구와의 통합이 필요한데, MCP는 다음과 같은 기능을 제공:
+
+- LLM이 바로 연결해 사용할 수 있는 다양한 사전 구축된 통합 기능 제공
+- LLM 제공업체 간 유연한 전환 가능
+- 자체 인프라 내에서 데이터를 안전하게 보호할 수 있는 베스트 프랙티스 제공
+
+
+
+주요 구성 요소
+
+![img](https://resources-public-prd.modulabs.co.kr/post/attachment/7c0eb15f-6a43-4c17-af83-54e844b31343.png)
+
+- MCP 호스트: Claude Desktop, IDE, 기타 AI 도구처럼 MCP를 통해 데이터에 접근하고자 하는 프로그램들
+- MCP 클라이언트: 서버와 1:1 연결을 유지하는 프로토콜 클라이언트
+- MCP 서버: 특화된 컨텍스트와 기능을 제공
+- 로컬 데이터 소스: 사용자의 컴퓨터에 있는 파일, 데이터베이스, 서비스 등 MCP 서버가 안전하게 접근할 수 있는 로컬 자원
+- 원격 서비스: API 등을 통해 인터넷 상에서 접근 가능한 외부 시스템으로, MCP 서버가 연결할 수 있음
+
+
+
+### 6.2 MCP 작동 방식
+
+연결 설정 (connection establishment)
+
+- 호스트가 MCP 클라이언트를 생성
+- 클라이언트는 MCP 서버와 연결 설정
+- 연결 설정 과정에서 프로토콜 버전, 기능, 권한 등 설정
+
+![img](https://resources-public-prd.modulabs.co.kr/post/attachment/52a65667-8013-44b2-9802-52a94471fc06.png)
+
+
+
+컨텍스트 교환 (Context Exchange)
+
+- 서버는 클라이언트에게 데이터 소스의 컨텍스트 정보를 제공
+- 클라이언트는 이 정보를 호스트 프로세스에 전달
+- 호스트 프로세스트는 여러 클라이언트로부터 받은 컨텍스트를 집계하여 AI 모델에 제공
+
+
+
+도구 호출 (Tool Invocation)
+
+- AI 모델은 특정 작업을 수행하기 위해 도구 호출 요청
+- 호스트 프로세스는 이 요청을 적절한 클라이언트에 전달
+- 클라이언트는 서버에 도구 호출 요청 전송
+- 서버는 요청된 작업을 수행하고 결과를 클라이언트에 반환
+
+
+
+결과 처리
+
+- 클라이언트는 서버로부터 받은 결과를 호스트 프로세스에 전달
+- 호스트 프로세스는 이 결과를 AI 모델에 제공
+- AI 모델은 이 정보를 바탕으로 응답 생성
+
+
+
+프로그래밍 언어
+
+MCP 는 다양한 언어의 SDK를 제공하고 있습니다.
+
+- [TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
+- [Python SDK](https://github.com/modelcontextprotocol/python-sdk)
+- [Java SDK](https://github.com/modelcontextprotocol/java-sdk)
+- [Kotlin SDK](https://github.com/modelcontextprotocol/kotlin-sdk)
+
+
+
+### 6.2 MCP 아키텍처
 
 #### 전체 아키텍처
 
@@ -2413,7 +2488,9 @@ graph TB
 | **Server Layer** | 서비스 제공 및 리소스 관리 | 도구 실행, 리소스 제공, 컨텍스트 관리 |
 | **External Systems** | 실제 데이터 및 서비스 | 데이터 저장소, 외부 API, 클라우드 서비스 |
 
-### 6.2 MCP 구성 요소
+
+
+### 6.3 MCP 구성 요소
 
 #### 클라이언트 (Client)
 
@@ -2519,7 +2596,9 @@ graph TD
 | `result` | any | - | 성공 응답 데이터 |
 | `error` | object | - | 오류 정보 |
 
-### 6.3 프로토콜 스펙
+
+
+### 6.4 프로토콜 스펙
 
 #### JSON-RPC 2.0 기반
 
@@ -2584,7 +2663,9 @@ MCP는 JSON-RPC 2.0 표준을 기반으로 하며, 다음과 같은 확장을 �
 | `-32001` | Tool error | 도구 실행 오류 |
 | `-32002` | Resource error | 리소스 접근 오류 |
 
-### 6.4 통신 메커니즘
+
+
+### 6.5 통신 메커니즘
 
 #### 지원되는 전송 방식
 
@@ -2633,7 +2714,7 @@ sequenceDiagram
 
 
 
-### 6.5 도구 및 리소스
+### 6.6 도구 및 리소스
 
 #### 도구 (Tools)
 
@@ -2676,11 +2757,11 @@ graph TB
 | `examples`    | array  | -    | 사용 예제               |
 | `tags`        | array  | -    | 분류 태그               |
 
-### 리소스 (Resources)
+##### 리소스 (Resources)
 
 리소스는 MCP 서버에서 제공하는 정적 또는 동적 데이터입니다.
 
-#### 리소스 유형
+##### 리소스 유형
 
 | 유형       | 설명               | 예시                       |
 | ---------- | ------------------ | -------------------------- |
@@ -2690,7 +2771,7 @@ graph TB
 | **템플릿** | 재사용 가능한 패턴 | 코드 템플릿, 설정 템플릿   |
 | **데이터** | 동적 데이터 콘텐츠 | 실시간 데이터, 캐시된 결과 |
 
-#### 리소스 URI 스키마
+##### 리소스 URI 스키마
 
 ```
 mcp://[authority]/[path]?[query]#[fragment]
@@ -2702,11 +2783,11 @@ mcp://[authority]/[path]?[query]#[fragment]
 - `mcp://docs/api/tools` - API 문서
 - `mcp://data/users?filter=active` - 사용자 데이터
 
-### 컨텍스트 (Context)
+#### 컨텍스트 (Context)
 
 컨텍스트는 대화 상태와 히스토리를 관리합니다.
 
-#### 컨텍스트 구조
+##### 컨텍스트 구조
 
 ```mermaid
 graph TB
@@ -2734,7 +2815,116 @@ graph TB
 
 
 
-### 6.6 MCP 예제
+### 6.7 MCP 예제
+
+#### MCP 서버 
+
+Python MCP SDK는 MCP 사양을 완전히 구현하고 있어 다음과 같은 작업을 쉽게 수행할 수 있다.
+
+- 어떤 MCP 서버와도 연결할 수 있는 MCP 클라이언트 구축
+- 리소스, 프롬프트, 도구 등을 노출하는 MCP 서버 생성
+- stdio, SSE 같은 표준 전송 방식 사용
+- 모든 MCP 프로토콜 메시지와 생명주기 이벤트 처리
+
+
+
+Install
+
+```
+# pip 통한 설치 
+pip install mcp
+```
+
+
+
+MCP 서버 구현
+
+덧셈 계산기와 인사하는 MCP 서버 생성.
+
+```
+#mcp_server.py
+from mcp.server.fastmcp import FastMCP
+
+
+# Create an MCP server
+mcp = FastMCP("mcp_project")
+
+
+# Add an additional tool
+@mcp.tool()
+def add(a: int, b: int) -> int:
+    """Add two numbers"""
+    return a + b
+
+
+# Add a dynamic greeing resource
+@mcp.resource("greeting://{name}")
+def get_greeting(name: str) -> str:
+    """Get a personalized greeting"""
+    return f"Hello, {name}!"
+
+
+if __name__ == "__main__":
+    mcp.run()
+```
+
+
+
+mcp 서버를 Dev 모드로 실행.(Inspector Proxy를 통해 테스트 환경 제공)
+
+```
+mcp dev mcp_server.py
+```
+
+
+
+실행 시 나오는 접속정보를 사용해 브라우저에서 접속
+
+![image-20250623171121548](C:\Users\kirob\AppData\Roaming\Typora\typora-user-images\image-20250623171121548.png)
+
+Resource Templates에서 get_greeting을 Tools에서 add를 확인 가능합니다.
+
+![image-20250623171235514](C:\Users\kirob\AppData\Roaming\Typora\typora-user-images\image-20250623171235514.png)
+
+**![image-20250623171342161](C:\Users\kirob\AppData\Roaming\Typora\typora-user-images\image-20250623171342161.png)**
+
+이 서버는 [Claude Desktop](https://claude.ai/download)에 설치할 수 있으며, 아래 명령어를 실행하면 즉시 서버와 상호작용할 수 있다.
+
+
+
+```
+#C:\Users\{사용자}\AppData\Roaming\Claude
+{
+  "mcpServers": {
+    "mcp-project": {
+      "command": "wsl",
+      "args": [
+        "-e",
+        "/home/kirobo/aiagent-env/bin/python",
+        "/home/kirobo/aiagent-sample/mcp_server.py"
+      ]
+    }
+  }
+}
+```
+
+
+
+이제 Claude Desktop을 실행시키면 도구와 mcp 서버가 연동된 것을 볼 수 있다.
+
+![image-20250624103600292](C:\Users\kirob\AppData\Roaming\Typora\typora-user-images\image-20250624103600292.png)
+
+![image-20250624103707884](C:\Users\kirob\AppData\Roaming\Typora\typora-user-images\image-20250624103707884.png)
+
+1+2를 질문한다.
+
+![image-20250624103753675](C:\Users\kirob\AppData\Roaming\Typora\typora-user-images\image-20250624103753675.png)
+
+
+
+
+
+
 
 #### stdio 기반(로컬)
 
@@ -2780,62 +2970,108 @@ if __name__ == "__main__":
 ```python
 # mcp_client.py
 import asyncio
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
-from autogen import LLMConfig
-from autogen.agentchat import AssistantAgent
-from autogen.mcp import create_toolkit
+import os
+from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
+from autogen_ext.tools.mcp import StreamableHttpMcpToolAdapter, StdioServerParams, mcp_server_tools
+from autogen_agentchat.agents import AssistantAgent
+from autogen_agentchat.ui import Console
+from autogen_core import CancellationToken
+from datetime import timedelta
+import logging
+from autogen_agentchat import EVENT_LOGGER_NAME, TRACE_LOGGER_NAME
 
-config_list_azure = [
-    {
-        "model": "deploy-gpt-4o-240806-01",
-        "api_type": "azure",
-        "base_url": "https://edutech-eastus.openai.azure.com/",
-        "api_version": "2023-12-01-preview",
-        "api_key": "" # 실제 키 사용 시 주의
-    }
-]
-llm_config = {
-    "cache_seed": 42, # 임의의 시드값
-    "temperature": 0.7, # LLM 응답의 다양성 제어
-    "config_list" : config_list_azure
-} 
+# Trace 로그 (디버깅용)
+trace_logger = logging.getLogger(TRACE_LOGGER_NAME)
+trace_logger.addHandler(logging.StreamHandler())
+trace_logger.setLevel(logging.DEBUG)
+1
+# 이벤트 로그 (구조화 메시지)
+event_logger = logging.getLogger(EVENT_LOGGER_NAME)
+event_logger.addHandler(logging.StreamHandler())
+event_logger.setLevel(logging.DEBUG)
 
-async def create_toolkit_and_run(session: ClientSession):
-    # MCP 서버에서 도구와 리소스를 Toolkit으로 래핑
-    toolkit = await create_toolkit(session=session)
+async def setup_mcp_tools():
+    """MCP 서버에서 도구들을 설정"""
+    server_params = StdioServerParams(
+        command="python",
+        args=["/home/kirobo/aiagent-sample/mcp_server4.py"],
+        )
     
-    # AG2/AutoGen AssistantAgent 생성
-    agent = AssistantAgent(
-        name="assistant",
-        llm_config=llm_config
-    )
-    
-    # Toolkit의 도구를 에이전트에 등록
-    toolkit.register_for_llm(agent)
-    
-    # MCP 도구를 사용하여 작업 실행
-    result = await agent.a_run(
-        message="""1. Add 123223 and 456789
-2. Get file content for 'ag2'.""",
-        tools=toolkit.tools,
-        max_turns=2,
-        user_input=False,
-    )
-    await result.process()
+    tools = await mcp_server_tools(server_params)
+    return tools
+
+async def setup_azure_client():
+    """Azure OpenAI 클라이언트 설정"""
+    try:
+         
+        model_client = AzureOpenAIChatCompletionClient(
+            model="gpt-4o",
+            azure_endpoint= "https://edutech-eastus.openai.azure.com/",
+            api_version= "2023-12-01-preview",
+            api_key= "",
+            azure_deployment="deploy-gpt-4o-240806-01"
+            )
+        
+        print("✅ Azure OpenAI 클라이언트 설정 완료 (표준 모델명)")
+        return model_client
+    except Exception as e:
+        print(f"⚠️ 표준 모델명 설정 실패, 커스텀 모델 정보로 재시도: {e}")
 
 async def main():
-    # MCP 서버 파라미터 (예: stdio 모드)
-    server_params = StdioServerParameters(
-        command="python",
-        args=["mcp_server.py", "stdio"],
-    )
-    async with stdio_client(server_params) as (read, write), ClientSession(read, write) as session:
-        await session.initialize()
-        await create_toolkit_and_run(session)
+    print("🚀 Autogen MCP 클라이언트 시작\n")
+    
+    try:
+        # 1. MCP 도구 설정
+        print("🔧 MCP 도구 연결 중...")
+        tools = await setup_mcp_tools()
+        
+        if not tools:
+            print("❌ MCP 도구를 찾을 수 없습니다. MCP 서버가 실행되고 있는지 확인하세요.")
+            return
+        
+        # 2. Azure OpenAI 클라이언트 설정
+        print("\n🤖 Azure OpenAI 클라이언트 설정 중...")
+        model_client = await setup_azure_client()
+        
+        # 3. Assistant Agent 생성
+        print("\n👨‍💼 Assistant Agent 생성 중...")
+        agent = AssistantAgent(
+            name="versatile_assistant",
+            model_client=model_client,
+            tools=tools,
+            system_message="""You are a versatile assistant with access to weather, calculation, and file information tools.
+
+Available tools:
+- add(expression): Perform mathematical calculations  
+
+Always use the appropriate tools when asked to perform tasks that match their capabilities.
+Provide clear, helpful responses and explain what tools you're using."""
+        )
+        
+        # 4. 작업 실행
+        print("\n🎯 작업 실행 중...\n")
+        await Console(
+            agent.run_stream(
+                task="""안녕하세요! 다음 작업들을 도와주세요:
+
+1. 123223 + 456789를 계산해주세요
+
+각 작업에 적절한 도구를 사용해서 수행해주세요.""",
+                cancellation_token=CancellationToken()
+            )
+        )
+        
+    except Exception as e:
+        print(f"\n❌ 오류 발생: {e}")
+        print("\n🔧 문제 해결 방법:")
+        print("1. MCP 서버가 실행되고 있는지 확인 (python mcp_server.py)")
+        print("2. 환경변수가 올바르게 설정되어 있는지 확인")
+        print("3. Azure OpenAI 배포명과 엔드포인트 확인")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
+   
 
 ```
 
@@ -3000,7 +3236,7 @@ async def setup_azure_client():
             model="gpt-4o",
             azure_endpoint= "https://edutech-eastus.openai.azure.com/",
             api_version= "2023-12-01-preview",
-            api_key= "a634b87afef5450e8b3a6e729a809c5f",
+            api_key= "",
             azure_deployment="deploy-gpt-4o-240806-01"
             )
         
