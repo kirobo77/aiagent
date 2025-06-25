@@ -2343,9 +2343,9 @@ if __name__ == "__main__":
 
 
 ## 6. MCP 개요
-Model Context Protocol(MCP)는 LLM 애플리케이션과 외부 데이터 소스 및 도구 간의 원활한 연동을 가능하게 해주는 오픈 프로토콜. 
-AI 기반 IDE를 만들거나, 채팅 인터페이스를 개선하거나, 맞춤형 AI 워크플로우를 구축하든 MCP는 LLM이 필요한 컨텍스트에 표준화된 방식으로 접근할 수 있는 환경 제공.
-LLM이 내가 사용하는 어플리케이션을 하나의 도구로 활용할 수 있게 만들어주는 방법.
+Model Context Protocol(MCP)는 LLM 애플리케이션과 외부 데이터 소스 및 도구 간의 원활한 연동을 가능하게 해주는 오픈 프로토콜이다. 
+AI 기반 IDE를 만들거나, 채팅 인터페이스를 개선하거나, 맞춤형 AI 워크플로우를 구축하든 MCP는 LLM이 필요한 컨텍스트에 표준화된 방식으로 접근할 수 있는 환경을 제공한다.
+LLM이 내가 사용하는 어플리케이션을 하나의 도구로 활용할 수 있게 만들어주는 방법이다.
 
 
 
@@ -2602,7 +2602,7 @@ graph TD
 
 #### JSON-RPC 2.0 기반
 
-MCP는 JSON-RPC 2.0 표준을 기반으로 하며, 다음과 같은 확장을 제공합니다:
+MCP는 JSON-RPC 2.0 표준을 기반으로 하며, 다음과 같은 확장을 제공한다.
 
 #### 기본 요청 구조
 ```json
@@ -2829,6 +2829,8 @@ Python MCP SDK는 MCP 사양을 완전히 구현하고 있어 다음과 같은 �
 
 
 **Install**
+
+해당 실습은 MS Autogen을 사용한다. 
 
 ```
 # pip 통한 설치 
@@ -3417,8 +3419,6 @@ pip install ag2[openai]
     "recommendations": [
         "ms-python.python",
         "ms-vscode-remote.remote-wsl",
-        "ms-python.pylint",
-        "ms-python.black-formatter"
     ]
 }
 ```
