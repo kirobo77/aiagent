@@ -2828,16 +2828,19 @@ Python MCP SDK는 MCP 사양을 완전히 구현하고 있어 다음과 같은 �
 
 
 
-Install
+**Install**
 
 ```
 # pip 통한 설치 
 pip install mcp
+pip install fastmcp
+pip install autogen
+pip install "autogen-ext[openai,mcp]>=0.4.2"
 ```
 
 
 
-MCP 서버 구현
+**MCP 서버 구현**
 
 덧셈 계산기와 인사하는 MCP 서버 생성.
 
@@ -2880,13 +2883,13 @@ mcp dev mcp_server.py
 
 실행 시 나오는 접속정보를 사용해 브라우저에서 접속
 
-![image-20250623171121548](C:\Users\kirob\AppData\Roaming\Typora\typora-user-images\image-20250623171121548.png)
+![image-20250623171121548](images/image-20250623171121548.png)
 
 Resource Templates에서 get_greeting을 Tools에서 add를 확인 가능합니다.
 
-![image-20250623171235514](C:\Users\kirob\AppData\Roaming\Typora\typora-user-images\image-20250623171235514.png)
+![image-20250623171235514](images/image-20250623171235514.png)
 
-**![image-20250623171342161](C:\Users\kirob\AppData\Roaming\Typora\typora-user-images\image-20250623171342161.png)**
+**![image-20250623171342161](images/image-20250623171342161.png)**
 
 이 서버는 [Claude Desktop](https://claude.ai/download)에 설치할 수 있으며, 아래 명령어를 실행하면 즉시 서버와 상호작용할 수 있다.
 
