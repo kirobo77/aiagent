@@ -723,7 +723,10 @@ llm_config = {
     "config_list" : config_list_azure
 } 
 
-
+function_map = {
+    "search_documentation": search_documentation,
+    "execute_code_analysis": execute_code_analysis
+}
 def search_documentation(query: str, language: str = "python") -> str:
     """
     온라인 문서에서 python 정보를 검색합니다.
@@ -1414,6 +1417,8 @@ graph TD
 
 ```python
 # agents/simple_agents.py
+#pip install fastapi uvicorn jinja2
+
 import os
 import json
 import asyncio
@@ -2815,6 +2820,139 @@ graph TB
 
 
 
+### 6.7 FastMCP
+
+ FastMCP는 MCP 서버와 클라이언트를 간단하게 생성할 수 있도록 설계된 고수준의 Pythonic 프레임워크이다.
+
+
+
+#### 기본 어노테이션 구조
+
+FastMCP에서는 세 가지 핵심 컴포넌트를 어노테이션으로 정의합니다:
+
+```
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("서버_이름")
+
+# 도구 정의
+@mcp.tool()
+def 도구_함수(파라미터: 타입) -> 반환타입:
+    """LLM에게 보여질 설명"""
+    # 구현부
+
+# 프롬프트 정의
+@mcp.prompt()
+def 프롬프트_함수(파라미터: str) -> str:
+    """프롬프트 설명"""
+    # 구현부
+```
+
+#### 도구 어노테이션 (`@mcp.tool()`)
+
+LLM이 호출할 수 있는 함수를 정의합니다:
+
+```
+@mcp.tool(
+    name="custom_name",  # 옵션: LLM에 노출될 이름 변경
+    description="상세 설명",  # 옵션: 기본 독스트링 대체
+    async_func=True  # 옵션: 비동기 함수일 경우
+)
+def weather_api(city: str) -> dict:
+    """특정 도시의 현재 날씨를 조회합니다"""
+    # API 호출 구현
+    return {"temperature": 23, "condition": "sunny"}
+```
+
+**핵심 특징**:
+
+- 파라미터 타입 어노테이션 필수 (`str`, `int`, `bool` 등)
+- 독스트링이 LLM에게 기능 설명 제공
+- 반환 타입 명시 권장
+
+#### 리소스 어노테이션 (`@mcp.resource()`)
+
+애플리케이션이 제공하는 데이터 소스를 정의합니다:
+
+```
+@mcp.resource(
+    uri="data://application-info",
+    name="AppInfo",
+    description="애플리케이션 런타임 정보",
+    mime_type="application/json"
+)
+async def get_app_status() -> dict:
+    return {
+        "version": "1.4.2",
+        "status": "running",
+        "uptime": "36 hours"
+    }
+```
+
+**설정 옵션**:
+
+- `uri`: 리소스 고유 식별자 (형식: `scheme://path`)
+- `mime_type`: 반환 데이터 형식 (기본: `text/plain`)
+- `tags`: 검색용 태그 설정 (예: `tags={"monitoring", "status"}`)
+
+#### 프롬프트 어노테이션 (`@mcp.prompt()`)
+
+재사용 가능한 프롬프트 템플릿 정의:
+
+```
+from mcp.server.fastmcp.prompts import base
+
+@mcp.prompt()
+def debug_error(error: str) -> list[base.Message]:
+    """에러 디버깅을 위한 프롬프트
+    
+    Args:
+        error: 발생한 에러 메시지
+    """
+    return [
+        base.Message(
+            role="user",
+            content=[
+                base.TextContent(
+                    text=f"다음 에러를 해결하는 방법: {error}. 단계별 가이드 제공"
+                )
+            ]
+        )
+    ]
+```
+
+#### 파라미터 메타데이터 확장
+
+`pydantic.Field`로 파라미터 정보 풍부화:
+
+```
+pythonfrom typing import Annotated
+from pydantic import Field
+
+@mcp.tool()
+def image_processor(
+    image_url: Annotated[
+        str, 
+        Field(description="처리할 이미지 URL", max_length=2083)
+    ],
+    format: Annotated[
+        Literal["jpeg", "png", "webp"],
+        Field(description="출력 포맷")
+    ] = "jpeg"
+) -> dict:
+    """이미지 처리 도구"""
+    # 구현부
+```
+
+**메타데이터 종류**:
+
+- `description`: 파라미터 설명
+- `ge`/`le`: 숫자 범위 제한 (예: `ge=1, le=100`)
+- `max_length`/`min_length`: 문자열 길이 제한
+- `pattern`: 정규식 패턴
+
+
+
 ### 6.7 MCP 예제
 
 #### MCP 서버 
@@ -2862,13 +3000,6 @@ def add(a: int, b: int) -> int:
     return a + b
 
 
-# Add a dynamic greeing resource
-@mcp.resource("greeting://{name}")
-def get_greeting(name: str) -> str:
-    """Get a personalized greeting"""
-    return f"Hello, {name}!"
-
-
 if __name__ == "__main__":
     mcp.run()
 ```
@@ -2887,7 +3018,7 @@ mcp dev mcp_server.py
 
 ![image-20250623171121548](images/image-20250623171121548.png)
 
-Resource Templates에서 get_greeting을 Tools에서 add를 확인 가능합니다.
+Resource Templates에서 get_greeting을 Tools에서 add를 확인 가능하다.
 
 ![image-20250623171235514](images/image-20250623171235514.png)
 
@@ -2901,13 +3032,17 @@ Resource Templates에서 get_greeting을 Tools에서 add를 확인 가능합니�
 #C:\Users\{사용자}\AppData\Roaming\Claude
 {
   "mcpServers": {
-    "mcp-project": {
+    "mcp-server": {
       "command": "wsl",
       "args": [
-        "-e",
-        "/home/kirobo/aiagent-env/bin/python",
-        "/home/kirobo/aiagent-sample/mcp_server.py"
-      ]
+        "-e", 
+        "bash", 
+        "-c", 
+        "source /home/{사용자}/aiagent-env/bin/activate && python /home/{사용자}/aiagent-sample/mcp_server.py"
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
     }
   }
 }
