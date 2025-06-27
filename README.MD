@@ -2902,7 +2902,7 @@ Resource Templates에서 get_greeting을 Tools에서 add를 확인 가능합니�
 {
   "mcpServers": {
     "mcp-project": {
-      "command": "wsl",
+      "command": "",
       "args": [
         "-e",
         "/home/kirobo/aiagent-env/bin/python",
@@ -3320,6 +3320,16 @@ if __name__ == "__main__":
 
 
 ## 7. 실습 환경 구성
+
+```
+#home/user/.config/pip/pip.conf
+[global]
+trusted-host = pypi.org
+               files.pythonhosted.org
+               pypi.python.org
+
+
+```
 
 ### 환경 구성 플로우차트
 ```mermaid
