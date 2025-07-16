@@ -3603,11 +3603,8 @@ which python
 #### 필수 라이브러리 설치
 
 ```bash
-# AutoGen 설치 (AG2 버전)
-pip install ag2==0.3.0
-
-# 또는 기존 AutoGen 사용 시
-# pip install pyautogen==0.9.0
+# AutoGen 설치
+pip install pyautogen==0.9.0
 
 # 웹 프레임워크 설치
 pip install fastapi==0.104.1
@@ -3659,6 +3656,40 @@ code .
 1. `Ctrl + Shift + P` 눌러 명령 팔레트 열기
 2. "Python: Select Interpreter" 검색 후 선택
 3. `~/autogen-project/autogen-env/bin/python` 선택
+
+
+
+### LLM 키 발급
+
+Google AI 가 한달 무료 크레딧 제공
+
+#### 단계 1: 사이트 접속 및 로그인
+
+1. Google AI Studio 접속
+   - https://ai.google.dev/aistudio?hl=ko
+2. Google 계정 로그인
+   - 기존 Gmail 계정 사용 가능
+   - 계정이 없으면 새로 생성
+
+#### 단계 2: API 키 발급
+
+1. API 키 생성 버튼 클릭
+   - "API 키 받기" 섹션으로 이동하여 "API 키 생성" 버튼을 클릭 [Az
+2. 프로젝트 선택
+   - 새 프로젝트에서 API 키 생성 옵션을 선택
+   - 기존 Google Cloud 프로젝트가 있으면 해당 프로젝트 선택 가능
+3. 샘플소스 내 llm 설정에 아래 내용으로 변경
+
+```
+config_list_gemini = [
+    {
+        "model": "gemini-1.5-pro",
+        "api_key": "",
+        "api_type": "google",
+        "base_url": "https://generativelanguage.googleapis.com/v1beta"
+    }
+]
+```
 
 
 
