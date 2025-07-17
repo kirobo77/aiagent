@@ -422,7 +422,7 @@ config_list_azure = [
         "api_type": "azure",
         "base_url": "https://edutech-eastus.openai.azure.com/",
         "api_version": "2023-12-01-preview",
-        "api_key": "a634b87afef5450e8b3a6e729a809c5f" # 실제 키 사용 시 주의
+        "api_key": "" # 실제 키 사용 시 주의
     }
 ]
 llm_config = {
@@ -3676,7 +3676,7 @@ Google AI 가 한달 무료 크레딧 제공
 config_list_gemini = [
     {
         "model": "gemini-1.5-pro",
-        "api_key": "AIzaSyD7w3YrqCJtLnCI6XLeVlEqDOky0k-Tims",
+        "api_key": "",
         "api_type": "google",
         "base_url": "https://generativelanguage.googleapis.com/v1beta"
     }
