@@ -3561,8 +3561,6 @@ python --version
 # pip 업그레이드
 python -m pip install --upgrade pip
 
-# 시스템인증서 적용(사내망 사용 시)
-pip install pip-system-certs
 ```
 
 
@@ -3630,6 +3628,10 @@ pip install requests==2.31.0
 
 # 유틸리티
 pip install jinja2==3.1.2
+
+
+# 시스템인증서 적용(사내망 사용 시)
+pip install pip-system-certs
 ```
 
 ### 7.4 VS Code 설치
