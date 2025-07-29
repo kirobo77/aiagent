@@ -3004,38 +3004,6 @@ if __name__ == "__main__":
 
 
 
-mcp 서버를 Dev 모드로 실행.(Inspector Proxy를 통해 테스트 환경 제공)
-
-```bash
-### Windows
-# 1. https://nodejs.org 접속
-# 2. LTS 버전 다운로드 (안정성이 좋음)
-# 3. .msi 파일 실행하여 설치
-# 4. 설치 완료 후 확인
-### Linux
-# sudo apt update
-# sudo apt install nodejs npms
-
-node --version
-npm --version
-
-npm install -g @modelcontextprotocol/cli
-
-mcp dev mcp_server.py
-```
-
-
-
-실행 시 나오는 접속정보를 사용해 브라우저에서 접속
-
-![image-20250623171121548](images/image-20250623171121548.png)
-
-Resource Templates에서 get_greeting을 Tools에서 add를 확인 가능하다.
-
-![image-20250623171235514](images/image-20250623171235514.png)
-
-**![image-20250623171342161](images/image-20250623171342161.png)**
-
 #### Claude 연동
 
 이 서버는 [Claude Desktop](https://claude.ai/download)에 설치할 수 있으며, 아래 명령어를 실행하면 즉시 서버와 상호작용할 수 있다.
@@ -3541,13 +3509,13 @@ lsb_release -a
 sudo apt update && sudo apt upgrade -y
 
 # Python 및 관련 패키지 설치
-sudo apt install python3 python3-pip python3-venv python3-dev -y
+sudo apt install python python-pip python-venv python-dev -y
 
 # Python 버전 확인
-python3 --version
+python --version
 
 # pip 업그레이드
-python3 -m pip install --upgrade pip
+python -m pip install --upgrade pip
 ```
 
 #### Window에서 Python  설치
@@ -3562,7 +3530,6 @@ python --version
 
 # pip 업그레이드
 python -m pip install --upgrade pip
-
 ```
 
 
@@ -3576,17 +3543,28 @@ mkdir ~/autogen-project
 cd ~/autogen-project
 
 # 가상 환경 생성
-python3 -m venv autogen-env
+python -m venv autogen-env
 
 # 가상 환경 활성화
 source autogen-env/bin/activate
 
 # 가상 환경 활성화 확인 (프롬프트에 (autogen-env) 표시됨)
-which python
 ```
 #### 가상 환경 설정(Windows)
 ```bash
+# 프로젝트 디렉토리 생성
+mkdir ~/autogen-project
+cd ~/autogen-project
 
+# 가상 환경 생성
+python -m venv autogen-env
+
+# 가상 환경 활성화(PowerShell)
+.\autogen-env\Scripts\Activate.ps1
+# 가상 환경 활성화(Command)
+.\autogen-env\Scripts\activate.bat
+
+# 가상 환경 활성화 확인 (프롬프트에 (autogen-env) 표시됨)
 ```
 
 #### 필수 라이브러리 설치
@@ -3598,25 +3576,25 @@ pip install pyautogen==0.9.0
 pip install ag2[openai]
 
 # 웹 프레임워크 설치
-pip install fastapi==0.104.1
-pip install uvicorn[standard]==0.24.0
+pip install fastapi
+pip install uvicorn[standard]
 
 # 환경 관리
-pip install python-dotenv==1.0.0
+pip install python-dotenv
 
 # 데이터 처리
-pip install pydantic==2.5.0
-pip install aiofiles==23.2.1
-pip install python-multipart==0.0.6
+pip install pydantic
+pip install aiofiles
+pip install python-multipart
 
 
 
 # HTTP 클라이언트
-pip install httpx==0.25.2
-pip install requests==2.31.0
+pip install httpx
+pip install requests
 
 # 유틸리티
-pip install jinja2==3.1.2
+pip install jinja2
 
 
 # 시스템인증서 적용(사내망 사용 시)
@@ -3630,6 +3608,9 @@ pip install pip-system-certs
 2. 설치 시 "Add to PATH" 옵션 체크
 
 #### 필수 Extensions 설치
+
+VS Code Extention 내 아래 모듈 설치
+
 ```json
 {
     "recommendations": [
