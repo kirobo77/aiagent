@@ -592,7 +592,7 @@ executor = UserProxyAgent(
     human_input_mode="TERMINATE",
     max_consecutive_auto_reply=2,
     code_execution_config={
-        "work_dir": work_dir,
+        "work_dir": "./",
         "use_docker": False,
         "timeout": 60,
     },
@@ -770,6 +770,7 @@ assistant = autogen.AssistantAgent(
         - 호출 결과를 바탕으로 사용자 및 다른 에이전트에게 유용한 정보를 제공합니다.
     """,
     llm_config=llm_config,
+    
     max_consecutive_auto_reply=1,  # 최대 3번까지 연속 응답
 )
 
@@ -1576,6 +1577,7 @@ def get_chatbot_manager() -> SimpleChatbotManager:
 #### FastAPI 서버 구현
 
 ```python
+#/static 디렉토리 생성
 # main.py
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -3047,8 +3049,7 @@ MCP 설정(Windows)
       }
     }
   }
-} }
-}
+} 
 ```
 
 
