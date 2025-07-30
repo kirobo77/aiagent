@@ -3552,10 +3552,18 @@ source autogen-env/bin/activate
 ```
 #### 가상 환경 설정(Windows)
 ```bash
+<<<<<<< Updated upstream
 # 프로젝트 디렉토리 생성
 mkdir ~/autogen-project
 cd ~/autogen-project
 
+=======
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+mkdir ~/autogen-project
+cd ~/autogen-project
+
+>>>>>>> Stashed changes
 # 가상 환경 생성
 python -m venv autogen-env
 
