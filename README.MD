@@ -421,7 +421,7 @@ config_list_azure = [
         "api_type": "azure",
         "base_url": "https://mcp-openai-ict.openai.azure.com/",
         "api_version": "2024-12-01-preview",
-        "api_key": "EIVEP6wb2yltGSy968l9oMfcZZprvps2MuEaTPc8UHfkRS9DuTVfJQQJ99BFACNns7RXJ3w3AAABACOGdf6H" # 실제 키 사용 시 주의
+        "api_key": "" # 실제 키 사용 시 주의
     }
 ]
 
@@ -3096,10 +3096,6 @@ files = {
     "ag2": "AG has released 0.8.5 version on 2025-04-03",
 }
 
-@mcp.resource("server-file://{name}")
-def get_server_file(name: str) -> str:
-    """Get a file content"""
-    return files.get(name, f"File not found: {name}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="MCP Server")
@@ -3116,7 +3112,7 @@ if __name__ == "__main__":
 import asyncio
 import os
 from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
-from autogen_ext.tools.mcp import StreamableHttpMcpToolAdapter, StdioServerParams, mcp_server_tools
+from autogen_ext.tools.mcp import StdioServerParams, mcp_server_tools
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.ui import Console
 from autogen_core import CancellationToken
@@ -3128,7 +3124,7 @@ from autogen_agentchat import EVENT_LOGGER_NAME, TRACE_LOGGER_NAME
 trace_logger = logging.getLogger(TRACE_LOGGER_NAME)
 trace_logger.addHandler(logging.StreamHandler())
 trace_logger.setLevel(logging.DEBUG)
-1
+
 # 이벤트 로그 (구조화 메시지)
 event_logger = logging.getLogger(EVENT_LOGGER_NAME)
 event_logger.addHandler(logging.StreamHandler())
@@ -3138,10 +3134,11 @@ async def setup_mcp_tools():
     """MCP 서버에서 도구들을 설정"""
     server_params = StdioServerParams(
         command="python",
-        args=["/home/kirobo/aiagent-sample/mcp_server4.py"],
+        args=["D:/aiagent-study/mcp_server.py"],
         )
     
     tools = await mcp_server_tools(server_params)
+    
     return tools
 
 async def setup_azure_client():
@@ -3150,10 +3147,10 @@ async def setup_azure_client():
          
         model_client = AzureOpenAIChatCompletionClient(
             model="gpt-4o",
-            azure_endpoint= "https://edutech-eastus.openai.azure.com/",
-            api_version= "2023-12-01-preview",
+            azure_endpoint= "https://mcp-openai-ict.openai.azure.com/",
+            api_version= "2024-12-01-preview",
             api_key= "",
-            azure_deployment="deploy-gpt-4o-240806-01"
+            azure_deployment="gpt-4o"
             )
         
         print("✅ Azure OpenAI 클라이언트 설정 완료 (표준 모델명)")
@@ -3183,13 +3180,13 @@ async def main():
             name="versatile_assistant",
             model_client=model_client,
             tools=tools,
-            system_message="""You are a versatile assistant with access to weather, calculation, and file information tools.
+            system_message="""당신은 날씨, 계산, 파일 정보 도구에 접근할 수 있는 다재다능한 어시스턴트입니다.
+사용 가능한 도구들:
 
-Available tools:
-- add(expression): Perform mathematical calculations  
+list_tools(): 사용 가능한 모든 도구를 보여줍니다
 
-Always use the appropriate tools when asked to perform tasks that match their capabilities.
-Provide clear, helpful responses and explain what tools you're using."""
+해당 기능과 일치하는 작업을 수행하도록 요청받았을 때는 항상 적절한 도구를 사용하세요.
+명확하고 도움이 되는 응답을 제공하고, 어떤 도구를 사용하고 있는지 설명하세요."""
         )
         
         # 4. 작업 실행
@@ -3214,8 +3211,7 @@ Provide clear, helpful responses and explain what tools you're using."""
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
-   
+    asyncio.run(main()) 
 
 ```
 
@@ -3351,25 +3347,11 @@ async def setup_mcp_tools():
     """MCP 서버에서 도구들을 설정"""
     server_params = StreamableHttpServerParams(
         url="http://127.0.0.1:8000/mcp",
-        timeout=timedelta(seconds=30),
-        sse_read_timeout=timedelta(seconds=300),
         terminate_on_close=True
     )
     
     tools = await mcp_server_tools(server_params)
-    #tools = []
-    #tool_names = ["get_weather", "calculate", "get_file_info", "list_tools"]
-    
-    #for tool_name in tool_names:
-    #    try:
-    #        adapter = await StreamableHttpMcpToolAdapter.from_server_params(
-    #            server_params, tool_names
-    #        )
-    #        tools.append(adapter)
-    #        print(f"✅ {tool_name} 도구 연결 성공")
-    #    except Exception as e:
-    #        print(f"❌ {tool_name} 도구 연결 실패: {e}")
-    
+     
     return tools
 
 async def setup_azure_client():
@@ -3378,10 +3360,10 @@ async def setup_azure_client():
          
         model_client = AzureOpenAIChatCompletionClient(
             model="gpt-4o",
-            azure_endpoint= "https://edutech-eastus.openai.azure.com/",
-            api_version= "2023-12-01-preview",
-            api_key= "",
-            azure_deployment="deploy-gpt-4o-240806-01"
+            azure_endpoint= "https://mcp-openai-ict.openai.azure.com/",
+            api_version= "2024-12-01-preview",
+            api_key= "EIVEP6wb2yltGSy968l9oMfcZZprvps2MuEaTPc8UHfkRS9DuTVfJQQJ99BFACNns7RXJ3w3AAABACOGdf6H",
+            azure_deployment="gpt-4o"
             )
         
         print("✅ Azure OpenAI 클라이언트 설정 완료 (표준 모델명)")
@@ -3411,16 +3393,12 @@ async def main():
             name="versatile_assistant",
             model_client=model_client,
             tools=tools,
-            system_message="""You are a versatile assistant with access to weather, calculation, and file information tools.
+            system_message="""당신은 날씨, 계산, 파일 정보 도구에 접근할 수 있는 다재다능한 어시스턴트입니다.
+사용 가능한 도구들:
+list_tools(): 사용 가능한 모든 도구를 보여줍니다
 
-Available tools:
-- get_weather(location): Get weather information for a location
-- calculate(expression): Perform mathematical calculations  
-- get_file_info(filename): Get information about files
-- list_tools(): Show all available tools
-
-Always use the appropriate tools when asked to perform tasks that match their capabilities.
-Provide clear, helpful responses and explain what tools you're using."""
+해당 기능과 일치하는 작업을 수행하도록 요청받았을 때는 항상 적절한 도구를 사용하세요.
+명확하고 도움이 되는 응답을 제공하고, 어떤 도구를 사용하고 있는지 설명하세요."""
         )
         
         # 4. 작업 실행
@@ -3449,7 +3427,6 @@ Provide clear, helpful responses and explain what tools you're using."""
 
 if __name__ == "__main__":
     asyncio.run(main())
-   
 
 ```
 
@@ -3545,6 +3522,9 @@ cd ~/autogen-project
 
 # 가상 환경 생성
 python -m venv autogen-env
+
+# 실행 정책 완화
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 # 가상 환경 활성화
 source autogen-env/bin/activate
