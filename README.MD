@@ -258,7 +258,7 @@ graph TB
 ```python
 # basic_example.py
 import os
-from autogen import AssistantAgent, UserProxyAgent
+from autogen import UserProxyAgent
 # 코드 실행에 특화된 UserProxyAgent
 user_proxy = UserProxyAgent(
     name="code_executor",
@@ -277,7 +277,7 @@ user_proxy = UserProxyAgent(
                                    "TERMINATE" in msg.get("content", "")
 )
 
-messages = [{"role": "user", "content": "```bash\nls -al\n```"}]
+messages = [{"role": "user", "content": "```shell\nls -al\n```"}]
 
 #실행 및 결과 확인
 response = user_proxy.generate_reply(messages)
@@ -325,7 +325,6 @@ graph LR
 
 ```python
 import os
-from dotenv import load_dotenv
 from autogen import AssistantAgent
 
 # LLM 설정 구성
@@ -418,13 +417,14 @@ from autogen import AssistantAgent, UserProxyAgent
 # LLM 설정 구성
 config_list_azure = [
     {
-        "model": "deploy-gpt-4o-240806-01",
+        "model": "gpt-4o",
         "api_type": "azure",
-        "base_url": "https://edutech-eastus.openai.azure.com/",
-        "api_version": "2023-12-01-preview",
-        "api_key": "" # 실제 키 사용 시 주의
+        "base_url": "https://mcp-openai-ict.openai.azure.com/",
+        "api_version": "2024-12-01-preview",
+        "api_key": "EIVEP6wb2yltGSy968l9oMfcZZprvps2MuEaTPc8UHfkRS9DuTVfJQQJ99BFACNns7RXJ3w3AAABACOGdf6H" # 실제 키 사용 시 주의
     }
 ]
+
 llm_config = {
     "cache_seed": 42, # 임의의 시드값
     "temperature": 0.7, # LLM 응답의 다양성 제어
@@ -3552,18 +3552,10 @@ source autogen-env/bin/activate
 ```
 #### 가상 환경 설정(Windows)
 ```bash
-<<<<<<< Updated upstream
 # 프로젝트 디렉토리 생성
 mkdir ~/autogen-project
 cd ~/autogen-project
 
-=======
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-
-mkdir ~/autogen-project
-cd ~/autogen-project
-
->>>>>>> Stashed changes
 # 가상 환경 생성
 python -m venv autogen-env
 
